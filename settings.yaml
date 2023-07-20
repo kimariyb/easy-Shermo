@@ -1,0 +1,6 @@
+# The path to the Shermo executable file.
+shermo_path: "D:\\environment\\Shermo"
+# The program for performing a single point calculation task. 1. gaussian; 2. orca
+sp_file: "orca"
+# The program for performing a vibrational analysis task. 1. gaussian; 2. orca
+freq_file: "gaussian"
