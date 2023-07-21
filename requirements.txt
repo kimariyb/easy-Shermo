@@ -1,2 +1,4 @@
 PyYAML~=6.0
+cclib~=1.7.2
+numpy~=1.15
 chardet~=5.1.0

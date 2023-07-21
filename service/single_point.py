@@ -3,6 +3,8 @@ import glob
 import os
 import re
 from decimal import Decimal
+
+import cclib
 import chardet
 
 
@@ -40,8 +42,8 @@ def get_orca_sp():
                 # 查找单点能量
                 energies = re.findall(energy_regex, contents)
                 if energies:
-                    # 只处理第一个单点能量
-                    energy = Decimal(energies[0])
+                    # 查找文件最后一个含有 FINAL SINGLE POINT ENERGY 后面的能量值
+                    energy = Decimal(energies[-1])
                     results.append((os.path.basename(file), energy))
                     print(f'File: {file}, Energy: {energy}')
                 else:
@@ -57,4 +59,24 @@ def get_gaussian_sp():
     获得 sp 目录下的所有 Gaussian 文件的单点能
     :return: 所有文件的单点能量和文件名组成的列表
     """
-    pass
+    # 获取 sp 目录中所有的 gaussian 输出文件
+    dir_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'sp')
+    files = glob.glob(os.path.join(dir_path, '*.out'))
+
+    results = []
+    for file in files:
+        try:
+            # 使用 cclib 库解析 Gaussian 输出文件
+            data = cclib.io.ccopen(file).parse()
+
+            # 获得单点能量
+            energy = data.scfenergies[-1]
+
+            # 将结果添加到列表中
+            results.append((os.path.basename(file), energy))
+            print(f'File: {file}, Energy: {energy}')
+
+        except Exception as e:
+            print(f'Error: Failed to read {file}: {e}')
+
+    return results
