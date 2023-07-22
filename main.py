@@ -4,9 +4,12 @@ from utils.config import read_config
 
 def main():
     config = read_config("settings.yaml")
-    print(config)
     parser = ParserFactory().create_parser(config)
-    parser.get_sp()
+    energies = parser.get_sp()
+    for tuple_elem in energies:
+        print(tuple_elem[0])
+        print(str(tuple_elem[1]))
+
 
 
 if __name__ == '__main__':

@@ -1,0 +1,102 @@
+ Shermo: A general code for calculating molecular thermochemistry properties
+ Version 2.3.6  Release date: 2023-May-4
+ Developer: Tian Lu (sobereva@sina.com)
+ Beijing Kein Research Center for Natural Sciences (http://www.keinsci.com)
+ Official website: http://sobereva.com/soft/shermo
+ 
+  **** If this code is utilized in your work, PLEASE CITE following paper ****
+ Tian Lu, Qinxue Chen, Shermo: A general code for calculating molecular thermodynamic properties, Comput. Theor. Chem., 1200, 113249 (2021) DOI: 10.1016/j.comptc.2021.113249
+ 
+ Warning: settings.ini cannot be found in either current folder or the directory defined by Shermopath environment, thus default parameters are used!
+ Command of invoking Shermo:
+ D:\environment\Shermo\Shermo.exe D:\project\easy-Shermo\opt\H3O+_opt.out -E -76.8121509 -ilowfreq 2 -sclZPE 0.9882
+ Note: One or more running parameters are overridden by arguments
+ 
+ Running parameters:
+ Printing individual contribution of vibration modes: No
+ Temperature:     298.150 K
+ Pressure:          1.000 atm
+ Scale factor of vibrational frequencies for ZPE:        0.9882
+ Scale factor of vibrational frequencies for U(T)-U(0):  1.0000
+ Scale factor of vibrational frequencies for S(T):       1.0000
+ Scale factor of vibrational frequencies for CV:         1.0000
+ Low frequencies treatment: Grimme's interpolation for entropy
+ 
+ Default atomic masses: Same as the output file
+ Loading Gaussian output file...
+ Note: The electronic energy specified by "E" parameter will be used
+ Detecting point group...
+ Point group has been successfully detected
+ 
+                       ======= Molecular information =======
+ Electronic energy:      -76.81215090 a.u.
+ Spin multiplicity:  1
+ Atom    1 (O )   Mass:   15.994910 amu
+ Atom    2 (H )   Mass:    1.007830 amu
+ Atom    3 (H )   Mass:    1.007830 amu
+ Atom    4 (H )   Mass:    1.007830 amu
+ Total mass:       19.018400 amu
+ 
+ Point group: C3v 
+ Rotational symmetry number:  3
+ Principal moments of inertia (amu*Bohr^2):
+        5.435819        5.442330        9.369355
+ Rotational constants relative to principal axes (GHz):
+    332.009049    331.611884    192.621717
+ Rotational temperatures (K):   15.933903   15.914843    9.244374
+ This is not a linear molecule
+
+ There are     6 frequencies (cm^-1):
+   940.1  1774.0  1780.0  3635.5  3718.1  3720.2
+
+ Note: Only for translation, U is different to H, and CV is different to CP
+ 
+                          ======= Translation =======
+ Translational q:    1.963210E+030     q/NA:    3.259986E+006
+ Translational U:      3.718 kJ/mol      0.889 kcal/mol
+ Translational H:      6.197 kJ/mol      1.481 kcal/mol
+ Translational S:    145.480 J/mol/K    34.771 cal/mol/K  -TS:  -10.37 kcal/mol
+ Translational CV:    12.472 J/mol/K     2.981 cal/mol/K
+ Translational CP:    20.786 J/mol/K     4.968 cal/mol/K
+ 
+                          ========= Rotation ========
+ Rotational q:    6.282101E+001
+ Rotational U:      3.718 kJ/mol      0.889 kcal/mol    =H
+ Rotational S:     46.896 J/mol/K    11.208 cal/mol/K   -TS:  -3.342 kcal/mol
+ Rotational CV:    12.472 J/mol/K     2.981 cal/mol/K   =CP
+ 
+                          ======== Vibration ========
+ Vibrational q(V=0):    1.011205E+000
+ Vibrational q(bot):    4.914805E-017
+ Vibrational U(T)-U(0):     0.130 kJ/mol     0.031 kcal/mol   =H(T)-H(0)
+ Vibrational U:     92.148 kJ/mol     22.024 kcal/mol    =H
+ Vibrational S:      0.528 J/mol/K     0.126 cal/mol/K   -TS:  -0.038 kcal/mol
+ Vibrational CV:     2.103 J/mol/K     0.503 cal/mol/K   =CP
+ Zero-point energy (ZPE):     92.02 kJ/mol,     21.99 kcal/mol    0.035048 a.u.
+ 
+                     ======== Electron excitation ========
+ Electronic q:    1.000000E+000
+ Electronic U:      0.000 kJ/mol      0.000 kcal/mol    =H
+ Electronic S:      0.000 J/mol/K     0.000 cal/mol/K   -TS:   0.000 kcal/mol
+ Electronic CV:     0.000 J/mol/K     0.000 cal/mol/K   =CP
+ 
+ 
+                           ===========================
+                           ========== Total ==========
+                           ===========================
+ Total q(V=0):       1.247127E+032
+ Total q(bot):       6.061469E+015
+ Total q(V=0)/NA:    2.070903E+008
+ Total q(bot)/NA:    1.006531E-008
+ Total CV:      27.047 J/mol/K       6.464 cal/mol/K
+ Total CP:      35.361 J/mol/K       8.452 cal/mol/K
+ Total S:      192.904 J/mol/K      46.105 cal/mol/K    -TS:   -13.746 kcal/mol
+ Zero point energy (ZPE):     92.018 kJ/mol     21.993 kcal/mol   0.035048 a.u.
+ Thermal correction to U:     99.585 kJ/mol     23.801 kcal/mol   0.037930 a.u.
+ Thermal correction to H:    102.064 kJ/mol     24.394 kcal/mol   0.038874 a.u.
+ Thermal correction to G:     44.549 kJ/mol     10.648 kcal/mol   0.016968 a.u.
+ Electronic energy:        -76.8121509 a.u.
+ Sum of electronic energy and ZPE, namely U/H/G at 0 K:        -76.7771031 a.u.
+ Sum of electronic energy and thermal correction to U:         -76.7742211 a.u.
+ Sum of electronic energy and thermal correction to H:         -76.7732769 a.u.
+ Sum of electronic energy and thermal correction to G:         -76.7951830 a.u.

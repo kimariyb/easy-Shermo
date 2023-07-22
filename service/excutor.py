@@ -1,31 +1,50 @@
+import glob
 import os
 import subprocess
 
-
-def run_shermo(shermo_path):
-    """
-    批量运行 Shermo 可执行程序，将输入文件夹中的所有 ".out" 文件转换为 Shermo 格式，并输出到输出文件夹中。
-    :param shermo_path: Shermo 可执行程序的路径。
-    :return 一个 shermo 对象
-    """
-    # 循环遍历输入文件夹下的所有文件
-    input_dir = '../opt'
-    output_dir = '../output'
-    for filename in os.listdir(input_dir):
-        # 检查文件扩展名是否为 ".out"
-        if filename.endswith(".out"):
-            # 构造 Shermo 命令行参数
-            input_path = os.path.join(input_dir, filename)
-            output_path = os.path.join(output_dir, f"{filename}.shermo")
-            args = [shermo_path, input_path, "-E", output_path]
-            # 调用 Shermo 可执行程序
-            result = subprocess.run(args, capture_output=True, text=True)
-            # 检查程序是否成功执行
-            if result.returncode == 0:
-                print(f"{filename}: Shermo completed successfully.")
-            else:
-                print(f"{filename}: Shermo execution failed.")
-                print(result.stderr)
+from service.parser import ParserFactory
+from utils.config import read_config
 
 
+def run_shermo(config, file_path, energy):
+    # 获取文件名和输出文件夹路径
+    file_name = os.path.splitext(os.path.basename(file_path))[0]
+    output_dir = "../output"
 
+    # 运行 Shermo 程序
+    args = [
+        config.shermo_path,
+        file_path,
+        "-E", str(energy),
+        "-ilowfreq", config.ilow_freq,
+        "-sclZPE", config.scl_zpe
+    ]
+    result = subprocess.run(args, capture_output=True, text=True)
+
+    # 检查程序是否成功执行
+    if result.returncode == 0:
+        print(f"Shermo completed successfully on file {file_name}.")
+        contents = result.stdout
+        # 写入输出数据到文件
+        output_file = os.path.join(output_dir, f"{file_name}.txt")
+        with open(output_file, 'w') as f:
+            f.write(contents)
+    else:
+        print(f"Shermo execution failed on file {file_name}.")
+        print(result.stderr)
+
+
+def create_files():
+    # 获取基础配置信息和能量列表
+    config = read_config('../settings.yaml')
+    energies = ParserFactory().create_parser(config).get_sp()
+
+    # 处理每个文件和能量的数据
+    opt_dir = "../opt"
+    for file_path in glob.glob(os.path.join(opt_dir, '*.out')):
+        # 检查文件是否存在
+        if os.path.isfile(file_path):
+            for energy in energies:
+                run_shermo(config, file_path, energy[1])
+        else:
+            print(f"Error: file {file_path} not found.")
