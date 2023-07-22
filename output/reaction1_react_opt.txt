@@ -9,7 +9,7 @@
  
  Warning: settings.ini cannot be found in either current folder or the directory defined by Shermopath environment, thus default parameters are used!
  Command of invoking Shermo:
- D:\environment\Shermo\Shermo.exe D:\project\easy-Shermo\opt\reaction1_react_opt.out -E -232.3314731 -ilowfreq 2 -sclZPE 0.9882
+ D:\environment\Shermo\Shermo.exe D:\project\easy-Shermo\opt\reaction1_react_opt.out -E -232.3314731 -ilowfreq 2 -sclZPE 0.9882 -sclheat 1.0062 -sclS 1.0104 -sclCV 1.0 -T 298.15 -P 1.0
  Note: One or more running parameters are overridden by arguments
  
  Running parameters:
@@ -17,8 +17,8 @@
  Temperature:     298.150 K
  Pressure:          1.000 atm
  Scale factor of vibrational frequencies for ZPE:        0.9882
- Scale factor of vibrational frequencies for U(T)-U(0):  1.0000
- Scale factor of vibrational frequencies for S(T):       1.0000
+ Scale factor of vibrational frequencies for U(T)-U(0):  1.0062
+ Scale factor of vibrational frequencies for S(T):       1.0104
  Scale factor of vibrational frequencies for CV:         1.0000
  Low frequencies treatment: Grimme's interpolation for entropy
  
@@ -80,9 +80,9 @@
                           ======== Vibration ========
  Vibrational q(V=0):    5.986270E+000
  Vibrational q(bot):    6.404413E-052
- Vibrational U(T)-U(0):     7.723 kJ/mol     1.846 kcal/mol   =H(T)-H(0)
- Vibrational U:    300.872 kJ/mol     71.910 kcal/mol    =H
- Vibrational S:     40.809 J/mol/K     9.754 cal/mol/K   -TS:  -2.908 kcal/mol
+ Vibrational U(T)-U(0):     7.657 kJ/mol     1.830 kcal/mol   =H(T)-H(0)
+ Vibrational U:    300.806 kJ/mol     71.894 kcal/mol    =H
+ Vibrational S:     40.188 J/mol/K     9.605 cal/mol/K   -TS:  -2.864 kcal/mol
  Vibrational CV:    61.653 J/mol/K    14.735 cal/mol/K   =CP
  Zero-point energy (ZPE):    293.15 kJ/mol,     70.06 kcal/mol    0.111655 a.u.
  
@@ -102,13 +102,13 @@
  Total q(bot)/NA:    1.127776E-039
  Total CV:      86.596 J/mol/K      20.697 cal/mol/K
  Total CP:      94.910 J/mol/K      22.684 cal/mol/K
- Total S:      308.509 J/mol/K      73.735 cal/mol/K    -TS:   -21.984 kcal/mol
+ Total S:      307.887 J/mol/K      73.587 cal/mol/K    -TS:   -21.940 kcal/mol
  Zero point energy (ZPE):    293.149 kJ/mol     70.064 kcal/mol   0.111655 a.u.
- Thermal correction to U:    308.309 kJ/mol     73.688 kcal/mol   0.117428 a.u.
- Thermal correction to H:    310.787 kJ/mol     74.280 kcal/mol   0.118373 a.u.
- Thermal correction to G:    218.806 kJ/mol     52.296 kcal/mol   0.083339 a.u.
+ Thermal correction to U:    308.243 kJ/mol     73.672 kcal/mol   0.117403 a.u.
+ Thermal correction to H:    310.722 kJ/mol     74.264 kcal/mol   0.118348 a.u.
+ Thermal correction to G:    218.925 kJ/mol     52.324 kcal/mol   0.083384 a.u.
  Electronic energy:       -232.3314731 a.u.
  Sum of electronic energy and ZPE, namely U/H/G at 0 K:       -232.2198186 a.u.
- Sum of electronic energy and thermal correction to U:        -232.2140446 a.u.
- Sum of electronic energy and thermal correction to H:        -232.2131004 a.u.
- Sum of electronic energy and thermal correction to G:        -232.2481345 a.u.
+ Sum of electronic energy and thermal correction to U:        -232.2140696 a.u.
+ Sum of electronic energy and thermal correction to H:        -232.2131254 a.u.
+ Sum of electronic energy and thermal correction to G:        -232.2480889 a.u.
