@@ -97,22 +97,29 @@ class GaussianParser(Parser):
         """
         在文件内容中查找能量值
         """
+        ccsd_t_regex = re.compile(r'CCSD\(T\)=\s*(-?\d+\.\d+)')
         mp2_regex = re.compile(r'MP2=\s*(-?\d+\.\d+)')
         hf_regex = re.compile(r'HF=\s*(-?\d+\.\d+)')
 
-        mp2_matches = list(re.finditer(mp2_regex, contents))
-        if mp2_matches:
-            mp2_match = mp2_matches[-1]
-            mp2_energy = Decimal(mp2_match.group(1))
-            return mp2_energy
+        ccsd_t_matches = list(re.finditer(ccsd_t_regex, contents))
+        if ccsd_t_matches:
+            ccsd_t_match = ccsd_t_matches[-1]
+            ccsd_t_energy = Decimal(ccsd_t_match.group(1))
+            return ccsd_t_energy
         else:
-            hf_matches = list(re.finditer(hf_regex, contents))
-            if hf_matches:
-                hf_match = hf_matches[-1]
-                hf_energy = Decimal(hf_match.group(1))
-                return hf_energy
+            mp2_matches = list(re.finditer(mp2_regex, contents))
+            if mp2_matches:
+                mp2_match = mp2_matches[-1]
+                mp2_energy = Decimal(mp2_match.group(1))
+                return mp2_energy
             else:
-                raise ValueError('No energy found')
+                hf_matches = list(re.finditer(hf_regex, contents))
+                if hf_matches:
+                    hf_match = hf_matches[-1]
+                    hf_energy = Decimal(hf_match.group(1))
+                    return hf_energy
+                else:
+                    raise ValueError('No energy found')
 
     def process_files(self, file_pattern):
         """

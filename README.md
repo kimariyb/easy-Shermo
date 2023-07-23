@@ -4,7 +4,7 @@ EasyShermo 是 Kimariyb 开发的一款全自动批处理 Shermo 的 Python 脚�
 
 鉴于 Shermo 已经是一个功能十分强大的科学计算程序了，所以 EasyShermo 也只是提高了 Shermo 的使用效率，并没有做其他的工作。
 
-由于 EasyShermo 开发者 Kimariyb 仅使用 Gaussian 和 Orca 作为计算单点的程序，尽管 Shermo 支持很多量化计算程序，但是 EasyShermo 也只支持 Orca 和 Gaussian 单点任务的自动化。
+由于 EasyShermo 开发者 Kimariyb 仅使用 Gaussian 和 Orca 作为计算单点的程序，尽管 Shermo 支持很多量化计算程序，但是 EasyShermo 也只支持 Orca 和 Gaussian 单点任务的自动化。支持 Orca 全部级别下的单点计算任务输出文件，仅支持 Gaussian DFT 杂化和双杂化泛函以及 CCSD(T) 后 HF 计算的单点任务输出文件。
 
 ## 安装
 
