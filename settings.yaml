@@ -1,7 +1,7 @@
 # The path to the Shermo executable file.
 shermo_path: "D:\\environment\\Shermo\\Shermo.exe"
 # The program for performing a single point calculation task. 1. gaussian; 2. orca
-sp_file: 1
+sp_file: 2
 # Treatment of low frequencies. 0: Harmonic. 1: Raising low frequencies. 2: Grimme's entropy interpolation
 ilow_freq: 2
 # Frequency scale factor for ZPE

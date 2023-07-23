@@ -8,7 +8,7 @@ def welcome():
     """
     hello = """
 Easy Shermo: A python script to automate the use of Shermo
-Version 1.0.0  Release date: 2023-Jul
+Version 1.1.0  Release date: 2023-Jul-23
 Developer: Kimariyb (kimariyb@163.com)
 Address: XiaMen University, School of Electronic Science and Engineering
 Official website: https://github.com/kimariyb/easy-shermo

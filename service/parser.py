@@ -70,8 +70,8 @@ class OrcaParser(Parser):
 
         for file in files:
             try:
-                with open(file, 'r') as f:
-                    contents = f.read().replace(' ', '').replace('\n', '')
+                with open(file, 'r', encoding='utf-8') as f:
+                    contents = f.read()
                     energy = self.find_energy(contents)
                     results.append((os.path.basename(file), energy))
                     print(f'File: {file}, Energy: {energy}')
@@ -123,7 +123,7 @@ class GaussianParser(Parser):
 
         for file in files:
             try:
-                with open(file, 'r') as f:
+                with open(file, 'r', encoding="utf-8") as f:
                     contents = f.read().replace(' ', '').replace('\n', '')
                     energy = self.find_energy(contents)
                     results.append((os.path.basename(file), energy))

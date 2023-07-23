@@ -92,6 +92,8 @@ python main.py
 
 **约定大于配置！** 例如，`H3O+_sp.out` 和 `H3O+_opt.out` 就算统一的格式，区别只是 `H3O+` 后面的 `_sp` 和 `_opt`。
 
+**EasyShermo 1.1.0 已经将以上涉及到的例子分别放入了 `opt` 和 `sp` 文件中的 `g16` 和 `orca` 文件中。**
+
 ## 有关 Shermo
 
 Shermo 是 [Sobereva@北京科音](http://www.keinsci.com/) 开发的一个免费的可以独立运行的计算分子热力学数据的程序，需要从量子化学程序振动分析的输出文件里读取信息来进行计算，计算时基于理想气体假设。如果有对 Shermo 程序不熟悉的，可以浏览以下网址。
