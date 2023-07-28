@@ -1,6 +1,6 @@
 # EasyShermo
 
-EasyShermo 是 Kimariyb 开发的一款全自动批处理 Shermo 的 Python 脚本。Easy Shermo 使用极其简单无脑，可以瞬间用 Shermo 批处理几十个量子化学计算的输出文件。
+EasyShermo 是 Kimariyb 开发的一款全自动批处理 Shermo 的 Python 脚本。EasyShermo 使用极其简单无脑，可以瞬间用 Shermo 批处理几十个量子化学计算的输出文件。
 
 鉴于 Shermo 已经是一个功能十分强大的科学计算程序了，所以 EasyShermo 也只是提高了 Shermo 的使用效率，并没有做其他的工作。
 
@@ -15,12 +15,6 @@ EasyShermo 是 Kimariyb 开发的一款全自动批处理 Shermo 的 Python 脚�
 2. 下载 EasyShermo 源代码：
 ```shell
 git clone https://github.com/kimariyb/easy-shermo.git
-```
-
-3. 进入 EasyShermo 目录并安装依赖：
-```shell
-cd easy-shermo
-pip install -r requirements.txt
 ```
 
 ## 使用
