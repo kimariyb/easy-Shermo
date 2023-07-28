@@ -31,7 +31,7 @@ class ShermoConfig:
         self.defmass = self.config.get('Shermo', 'defmass')
 
     def __str__(self):
-        return f"ShermoConfig: shermoPath={self.shermoPath}, spFile={self.spFile}, prtvib={self.prtvib}, T={self.T}, " \
+        return f"The ShermoConfig is: shermoPath={self.shermoPath}, spFile={self.spFile}, prtvib={self.prtvib}, T={self.T}, " \
                f"P={self.P}, sclZPE={self.sclZPE}, sclheat={self.sclheat}, sclS={self.sclS}, sclCV={self.sclCV}, " \
                f"ilowfreq={self.ilowfreq}, ravib={self.ravib}, imode={self.imode}, conc={self.conc}, outshm={self.outshm}, " \
                f"defmass={self.defmass}"

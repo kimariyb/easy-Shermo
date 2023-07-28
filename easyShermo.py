@@ -2,7 +2,6 @@ import glob
 import os
 import re
 import subprocess
-import sys
 
 from config import ShermoConfig
 
@@ -18,9 +17,9 @@ class ParserFactory:
         :param shermo_config: 配置文件对象
         :return:
         """
-        if shermo_config.spFile == 1:
+        if shermo_config.spFile == "1":
             return GaussianParser()
-        elif shermo_config.spFile == 2:
+        elif shermo_config.spFile == "2":
             return OrcaParser()
         else:
             raise ValueError("Unknown sp file format")
@@ -91,7 +90,9 @@ class OrcaParser(Parser):
         获得 sp 目录下的所有 orca 文件的单点能
         :return: 所有文件的单点能量和文件名组成的列表
         """
-        dir_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'sp')
+        print()
+        print('The single point energy: ')
+        dir_path = os.path.join(os.getcwd(), 'sp')
         return self.process_files(os.path.join(dir_path, '*.out'))
 
 
@@ -151,7 +152,9 @@ class GaussianParser(Parser):
         处理 gaussian 单点任务产生的 out 文件，并且返回单点能
         :return: 所有文件的单点能量和文件名组成的列表
         """
-        dir_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'sp')
+        print()
+        print('The single point energy: ')
+        dir_path = os.path.join(os.getcwd(), 'sp')
         return self.process_files(os.path.join(dir_path, '*.out'))
 
 
@@ -163,6 +166,7 @@ def run_shermo(shermo_config: ShermoConfig, file_path, energy):
     :param energy: 单点能量
     """
     # 获取文件名和输出文件夹路径
+    file = os.path.basename(file_path)
     file_name = os.path.splitext(os.path.basename(file_path))[0]
     output_dir = os.path.join(os.getcwd(), 'output')
 
@@ -185,19 +189,22 @@ def run_shermo(shermo_config: ShermoConfig, file_path, energy):
         "-outshm", shermo_config.outshm,
         "-defmass", shermo_config.defmass,
     ]
-
+    # 同时输出命令
+    print(subprocess.list2cmdline(args))
+    # 通过命令行运行 Shermo
     result = subprocess.run(args, capture_output=True, text=True)
 
     # 检查程序是否成功执行
     if result.returncode == 0:
-        print(f"Shermo completed successfully on file {file_name}.")
+        print(f"Hint: Shermo completed successfully on file {file}.")
+        print()
         contents = result.stdout
         # 写入输出数据到文件
         output_file = os.path.join(output_dir, f"{file_name}.txt")
         with open(output_file, 'w') as f:
             f.write(contents)
     else:
-        print(f"Shermo execution failed on file {file_name}.")
+        print(f"Hint: Shermo execution failed on file {file}.")
         print(result.stderr)
 
 
@@ -207,6 +214,7 @@ def run_all_shermo(shermo_config: ShermoConfig):
     """
     # 获取基础配置信息和能量列表
     energies = ParserFactory().create_parser(shermo_config).get_sp()
+    print()
     # 注册输入文件夹
     opt_dir = os.path.join(os.getcwd(), 'opt')
     # 注册输入文件夹里所有的 out 文件

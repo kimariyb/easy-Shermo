@@ -2,9 +2,7 @@
 
 EasyShermo 是 Kimariyb 开发的一款全自动批处理 Shermo 的 Python 脚本。EasyShermo 使用极其简单无脑，可以瞬间用 Shermo 批处理几十个量子化学计算的输出文件。
 
-鉴于 Shermo 已经是一个功能十分强大的科学计算程序了，所以 EasyShermo 也只是提高了 Shermo 的使用效率，并没有做其他的工作。
-
-由于 EasyShermo 开发者 Kimariyb 仅使用 Gaussian 和 Orca 作为计算单点的程序，尽管 Shermo 支持很多量化计算程序，但是 EasyShermo 也只支持 Orca 和 Gaussian 单点任务的自动化。支持 Orca 全部级别下的单点计算任务输出文件，仅支持 Gaussian DFT 杂化和双杂化泛函以及 CCSD(T) 后 HF 计算的单点任务输出文件。
+鉴于 Shermo 已经是一个功能十分强大的科学计算程序了，所以 EasyShermo 也只是提高了 Shermo 的使用效率，并没有做其他的工作。 EasyShermo 开发者 Kimariyb 仅使用 Gaussian 和 Orca 作为计算单点的程序，尽管 Shermo 支持很多量化计算程序，但是 EasyShermo 也只支持 Orca 和 Gaussian 单点任务的自动化。
 
 ## 安装
 
@@ -19,74 +17,124 @@ git clone https://github.com/kimariyb/easy-shermo.git
 
 ## 使用
 
-1. EasyShermo 使用十分简单，在项目中存在一个 `settings.yaml`，使用 EasyShermo 之前，需要配置好 `settings.yaml`。
-```yaml
-# The path to the Shermo executable file.
-shermo_path: "D:\\environment\\Shermo\\Shermo.exe"
-# The program for performing a single point calculation task. 1. gaussian; 2. orca
-sp_file: 1
-# Treatment of low frequencies. 0: Harmonic. 1: Raising low frequencies. 2: Grimme's entropy interpolation
-ilow_freq: 2
-# Frequency scale factor for ZPE
-scl_zpe: 0.9882
-# Frequency scale factor for U(T)-U(0) (the same as that for H(T)-H(0))
-scl_heat: 1.0062
-# Frequency scale factor for S(T)
-scl_s: 1.0104
-# Frequency scale factor for heat capacity
-scl_cv: 1.0
-# in K. By specifying lower, upper limits and stepsize, e.g. 50,200,10, it can be scanned
-temperature: 298.15
-# in atm. By specifying lower, upper limits and stepsize, e.g. 0.5,20,0.1, it can be scanned
-pressure: 1.0
+1. 在使用 EasyShermo 之前，可以根据自己的需要配置好 `settings.ini`，`settings.ini` 中大部分的配置选项和 Shermo 的 `settings.ini` 一致。在使用 EasyShermo 前，必须配置 `settings.ini` 中的 `shermoPath`。
+
+```ini
+[Shermo]
+; The path to the Shermo executable file.
+shermoPath = "D:\\environment\\Shermo\\Shermo.exe"
+
+; The program for performing a single point calculation task.
+; 1. Gaussian
+; 2. Orca
+spFile = 1
+
+; Printing contribution of each vibrational mode.
+; 1: Printing contribution of each vibrational mode.
+; -1: Printing to vibcontri.txt.
+; 0: Do not print
+prtvib = 0
+
+; Temperature in K.
+; By specifying lower, upper limits and stepsize, e.g. 50,200,10, it can be scanned
+T = 298.15
+
+; Pressure in atm.
+; By specifying lower, upper limits and stepsize, e.g. 0.5,20,0.1, it can be scanned
+P = 1.0
+
+; Frequency scale factor for ZPE
+sclZPE = 1.0
+
+; Frequency scale factor for U(T)-U(0) (the same as that for H(T)-H(0))
+sclheat = 1.0
+
+; Frequency scale factor for S(T)
+sclS = 1.0
+
+; Frequency scale factor for heat capacity
+sclCV = 1.0
+
+; Treatment of low frequencies.
+; 0: Harmonic.
+; 1: Raising low frequencies.
+; 2: Entropy interpolation.
+; 3: Entropy and internal energy interpolations
+ilowfreq = 2
+
+; Raising lower frequencies to this value (cm^-1) when ilowfreq=1
+ravib = 100
+
+; Mode of evaluating thermodynamic quantities.
+; 0: Consider all terms.
+; 1: Ignore translation and rotation
+imode = 0
+
+; If not 0, will calculate variation of Gibbs free energy due to concentration change from present state to the specific state.
+; e.g. "conc= 1.5M" and "conc= 2.3atm"
+conc = 0
+
+; Exporting .shm file after loading QC program output file.
+; 1: Exporting .shm file after loading QC program output file.
+; 0: Do not export
+outshm = 0
+
+; Default atomic masses used during reading QC program output file.
+; 1: Element mass.
+; 2: Most abundant isotope.
+; 3: Same as the output file
+defmass = 3
 ```
 
-2. 将 `shermo_path` 配置好以后，分别将单点任务和振动分析任务的输出文件放入 `sp` 和 `opt` 文件夹里。例如，本项目中自带的例子：
+2. 在配置文件中将 `shermoPath` 配置好以后，分别将单点任务和振动分析任务的输出文件放入 `sp` 和 `opt` 文件夹里。同时，根据计算单点使用的程序是 Gaussian 还是 Orca 配置 `spFile` 选项。下面是 EasyShermo 测试文件的示例（单点、优化以及输出文件分别在 `sp/example`、`opt/example` 和 `output/example` 中）
+
 ```yaml
 - sp
-  - H3O+_sp.out
-  - reaction1_IN_sp.out
-  - reaction1_react_sp.out
+  - C_sp.out
+  - C2H2_sp.out
+  - C2H4_sp.out
+  - CH4_sp.out
+  - H2_sp.out
 - opt
-  - H3O+_opt.out
-  - reaction1_IN_opt.out
-  - reaction1_react_opt.out
+  - C_opt.out
+  - C2H2_opt.out
+  - C2H4_opt.out
+  - CH4_opt.out
+  - H2_opt.out
 ```
 
-3. 一切准备就绪之后，运行命令启动项目，然后回车。最后可以在 `output` 文件夹下找到输出的 txt 文件。
+3. 一切准备就绪之后，运行命令启动项目。EasyShermo 首先会扫描 `sp` 目录下的所有文件，并得到单点能。之后通过命令行批量调用 Shermo 执行 `opt` 目录下的文件。最后将 Shermo 输出内容写入到 `output` 文件夹的文本文件中，文件名与 `opt` 中的文件相同。
+
 ```shell
 python main.py
-
-[Enter]
 ```
 
-这些 txt 文件名都是和 opt 文件夹里的 out 文件名一样，只是后缀不同。请按照约定分别将 `sp` 文件夹里的单点文件和 `opt` 文件夹里的振动分析文件的文件名设置为统一格式，以免出现莫名的 bug。
+`output` 文件夹里的所有文件的内容，都和单独使用 Shermo 输出的内容一致。
 
-```txt
+```text
                            ===========================
                            ========== Total ==========
                            ===========================
- Total q(V=0):       1.247127E+032
- Total q(bot):       6.061469E+015
- Total q(V=0)/NA:    2.070903E+008
- Total q(bot)/NA:    1.006531E-008
- Total CV:      27.047 J/mol/K       6.464 cal/mol/K
- Total CP:      35.361 J/mol/K       8.452 cal/mol/K
- Total S:      192.883 J/mol/K      46.100 cal/mol/K    -TS:   -13.745 kcal/mol
- Zero point energy (ZPE):     92.018 kJ/mol     21.993 kcal/mol   0.035048 a.u.
- Thermal correction to U:     99.582 kJ/mol     23.801 kcal/mol   0.037929 a.u.
- Thermal correction to H:    102.061 kJ/mol     24.393 kcal/mol   0.038873 a.u.
- Thermal correction to G:     44.553 kJ/mol     10.648 kcal/mol   0.016969 a.u.
- Electronic energy:        -76.8121509 a.u.
- Sum of electronic energy and ZPE, namely U/H/G at 0 K:        -76.7771031 a.u.
- Sum of electronic energy and thermal correction to U:         -76.7742223 a.u.
- Sum of electronic energy and thermal correction to H:         -76.7732781 a.u.
- Sum of electronic energy and thermal correction to G:         -76.7951817 a.u.
+ Total q(V=0):       2.951881E+030
+ Total q(bot):       2.951881E+030
+ Total q(V=0)/NA:    4.901713E+006
+ Total q(bot)/NA:    4.901713E+006
+ Total CV:      12.472 J/mol/K       2.981 cal/mol/K
+ Total CP:      20.786 J/mol/K       4.968 cal/mol/K
+ Total S:      148.871 J/mol/K      35.581 cal/mol/K    -TS:   -10.609 kcal/mol
+ Zero point energy (ZPE):      0.000 kJ/mol      0.000 kcal/mol   0.000000 a.u.
+ Thermal correction to U:      3.718 kJ/mol      0.889 kcal/mol   0.001416 a.u.
+ Thermal correction to H:      6.197 kJ/mol      1.481 kcal/mol   0.002360 a.u.
+ Thermal correction to G:    -38.189 kJ/mol     -9.127 kcal/mol  -0.014545 a.u.
+ Electronic energy:        -37.7865397 a.u.
+ Sum of electronic energy and ZPE, namely U/H/G at 0 K:        -37.7865397 a.u.
+ Sum of electronic energy and thermal correction to U:         -37.7851234 a.u.
+ Sum of electronic energy and thermal correction to H:         -37.7841792 a.u.
+ Sum of electronic energy and thermal correction to G:         -37.8010850 a.u.
 ```
 
-**约定大于配置！** 例如，`H3O+_sp.out` 和 `H3O+_opt.out` 就算统一的格式，区别只是 `H3O+` 后面的 `_sp` 和 `_opt`。
+**约定**：为了避免出现 `sp` 文件和 `opt` 文件顺序不一致导致的问题，请按照约定分别将单点文件和优化文件的文件名该为 `xxx_sp.out` 和 `xxx_opt.out`。**约定大于配置**！ 
 
-**EasyShermo 1.1.0 已经将以上涉及到的例子分别放入了 `opt` 和 `sp` 文件中的 `g16` 和 `orca` 文件中。**
 
 ## 有关 Shermo
 
