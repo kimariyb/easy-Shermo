@@ -1,10 +1,11 @@
 # EasyShermo
 
+<img width="120%" src="https://repobeats.axiom.co/api/embed/d3eead8ca82e74af4f8831c245d4c2152553fbda.svg">
+
 EasyShermo 是 Kimariyb 开发的一款全自动批处理 Shermo 的 Python 脚本。EasyShermo 使用极其简单无脑，可以瞬间用 Shermo 批处理几十个量子化学计算的输出文件。
 
 鉴于 Shermo 已经是一个功能十分强大的科学计算程序了，所以 EasyShermo 也只是提高了 Shermo 的使用效率，并没有做其他的工作。 EasyShermo 开发者 Kimariyb 仅使用 Gaussian 和 Orca 作为计算单点的程序，尽管 Shermo 支持很多量化计算程序，但是 EasyShermo 也只支持 Orca 和 Gaussian 单点任务的自动化。
 
-<img width="120%" src="https://repobeats.axiom.co/api/embed/d3eead8ca82e74af4f8831c245d4c2152553fbda.svg">
 
 ## 安装
 
