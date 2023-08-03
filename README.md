@@ -22,7 +22,7 @@ git clone https://github.com/kimariyb/easy-shermo.git
 ```ini
 [Shermo]
 ; The path to the Shermo executable file.
-shermoPath = "D:\\environment\\Shermo\\Shermo.exe"
+shermoPath = D:\\environment\\Shermo\\Shermo.exe
 
 ; The program for performing a single point calculation task.
 ; 1. Gaussian
