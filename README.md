@@ -9,6 +9,8 @@ EasyShermo 是 Kimariyb 开发的一款全自动批处理 Shermo 的 Python 脚�
 
 ## 安装
 
+### 通过 Github Clone 安装
+
 本项目已经开源在 Github 上，您可以通过以下步骤安装 EasyShermo：
 
 1. 首先，您需要确保已经安装了 Python 环境和 pip 包管理工具。如果您还没有安装它们，请先安装它们。
@@ -18,7 +20,13 @@ EasyShermo 是 Kimariyb 开发的一款全自动批处理 Shermo 的 Python 脚�
 git clone https://github.com/kimariyb/easy-shermo.git
 ```
 
+### 直接下载编译好的 EasyShermo
+
+EasyShermo 的作者 Kimariyb 同时用 Go 语言将 EasyShermo 编译打包了一遍，实现的效果和用 Python 语言的相差无几。
+
 ## 使用
+
+### 使用 Python 运行
 
 1. 在使用 EasyShermo 之前，可以根据自己的需要配置好 `settings.ini`，`settings.ini` 中大部分的配置选项和 Shermo 的 `settings.ini` 一致。在使用 EasyShermo 前，必须配置 `settings.ini` 中的 `shermoPath`。
 
@@ -138,6 +146,9 @@ python main.py
 
 **约定**：为了避免出现 `sp` 文件和 `opt` 文件顺序不一致导致的问题，请按照约定分别将单点文件和优化文件的文件名该为 `xxx_sp.out` 和 `xxx_opt.out`。**约定大于配置**！ 
 
+### 直接运行
+
+EasyShermo 可以直接通过可执行文件运行，省去了下载 Python 和配置 Python 环境变量的步骤，对于不会编程的人来说相当友好。
 
 ## 有关 Shermo
 

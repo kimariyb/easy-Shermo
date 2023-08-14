@@ -4,11 +4,14 @@ import (
 	"fmt"
 	"gopkg.in/ini.v1"
 	"io"
+	"io/ioutil"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"regexp"
 	"strconv"
 	"strings"
+	"time"
 )
 
 /*
@@ -90,7 +93,7 @@ type results struct {
 	Energy   string
 }
 
-func findLastMatch(contents string, regex *regexp.Regexp, groupIndex int) (string, error) {
+func FindLastMatch(contents string, regex *regexp.Regexp, groupIndex int) (string, error) {
 	// 使用正则表达式在字符串中查找所有匹配项
 	matches := regex.FindAllStringSubmatch(contents, -1)
 	// 获取第二个匹配项
@@ -111,7 +114,7 @@ func GetGaussianEnergy() []results {
 	filePattern := filepath.Join("sp", "*.out")
 	filesName, err := filepath.Glob(filePattern)
 	if err != nil {
-		fmt.Println("获取文件列表时发生错误:", err)
+		fmt.Println("Error: failed to get files from directory", err)
 		return resultsCollection
 	}
 	// 遍历 filesName 切片，将每一个 results 存放在 resultsCollection 切片中
@@ -119,7 +122,7 @@ func GetGaussianEnergy() []results {
 		// 通过 fileName 打开文件
 		file, err := os.Open(fileName)
 		if err != nil {
-			fmt.Println("无法打开文件:", err)
+			fmt.Println("Error: Unable to open the file", err)
 			continue
 		}
 		defer file.Close()
@@ -128,12 +131,12 @@ func GetGaussianEnergy() []results {
 		contentsBytes, err := io.ReadAll(file)
 		// Bytes 转化为字符串
 		contentsString := string(contentsBytes)
-		// 替换空格和制表符
-		contentsString = strings.ReplaceAll(contentsString, " ", "")
-		contentsString = strings.ReplaceAll(contentsString, "\n", "")
+		// 替换空格
+		re := regexp.MustCompile(`\s+`)
+		contentsString = re.ReplaceAllString(contentsString, "")
 
 		if err != nil {
-			fmt.Println("读取文件时发生错误:", err)
+			fmt.Println("Error: Failed to read", err)
 			continue
 		}
 
@@ -143,40 +146,42 @@ func GetGaussianEnergy() []results {
 		hfRegex := regexp.MustCompile(`HF=\s*(-?\d+\.\d+)`)
 
 		// 首先匹配是否存在 CCSD(T) 的能量，如果存在则直接读取，并将结果保存在 results 中
-		ccsdTEnergy, err := findLastMatch(contentsString, ccsdTRegex, 1)
+		ccsdTEnergy, err := FindLastMatch(contentsString, ccsdTRegex, 1)
 		if err == nil {
-			fmt.Println("CCSD(T) Energy:", ccsdTEnergy)
 			fileResults := results{
 				FileName: fileName,
 				Energy:   ccsdTEnergy,
 			}
+			fmt.Println("The Single Point Energy [CCSD(T)] of " + fileName + " is : " + ccsdTEnergy)
+
 			resultsCollection = append(resultsCollection, fileResults)
 			continue
 		}
 		// 如果不存在 CCSD(T) 的能量，但是存在 MP2 能量，则将 MP2 结果保存在 results 中
-		mp2Energy, err := findLastMatch(contentsString, mp2Regex, 1)
+		mp2Energy, err := FindLastMatch(contentsString, mp2Regex, 1)
 		if err == nil {
-			fmt.Println("MP2 Energy:", mp2Energy)
 			fileResults := results{
 				FileName: fileName,
 				Energy:   mp2Energy,
 			}
+			fmt.Println("The Single Point Energy [MP2] of " + fileName + " is : " + mp2Energy)
+
 			resultsCollection = append(resultsCollection, fileResults)
 			continue
 		}
 		// 如果不存在 CCSD(T) 和 MP2 的能量，但是存在 HF 能量，则将 HF 结果保存在 results 中
-		hfEnergy, err := findLastMatch(contentsString, hfRegex, 1)
+		hfEnergy, err := FindLastMatch(contentsString, hfRegex, 1)
 		if err == nil {
-			fmt.Println("HF Energy:", hfEnergy)
 			fileResults := results{
 				FileName: fileName,
 				Energy:   hfEnergy,
 			}
+			fmt.Println("The Single Point Energy [HF] of " + fileName + " is : " + mp2Energy)
 			resultsCollection = append(resultsCollection, fileResults)
 			continue
 		}
 
-		fmt.Println("未找到能量值:", fileName)
+		fmt.Println("No energy found", fileName)
 	}
 
 	return resultsCollection
@@ -190,7 +195,7 @@ func GetOrcaEnergy() []results {
 	filePattern := filepath.Join("sp", "*.out")
 	filesName, err := filepath.Glob(filePattern)
 	if err != nil {
-		fmt.Println("获取文件列表时发生错误:", err)
+		fmt.Println("Error: failed to get files from directory", err)
 		return resultsCollection
 	}
 
@@ -199,7 +204,7 @@ func GetOrcaEnergy() []results {
 		// 通过 fileName 打开文件
 		file, err := os.Open(fileName)
 		if err != nil {
-			fmt.Println("无法打开文件:", err)
+			fmt.Println("Error: Unable to open the file", err)
 			continue
 		}
 		defer file.Close()
@@ -209,7 +214,7 @@ func GetOrcaEnergy() []results {
 		// Bytes 转化为字符串
 		contentsString := string(contentsBytes)
 		if err != nil {
-			fmt.Println("读取文件时发生错误:", err)
+			fmt.Println("Error: Failed to read", err)
 			continue
 		}
 
@@ -231,11 +236,88 @@ func GetOrcaEnergy() []results {
 
 			resultsCollection = append(resultsCollection, fileResults)
 		} else {
-			fmt.Println("未找到能量值:", fileName)
+			fmt.Println("No energy found", fileName)
 		}
 	}
 
 	return resultsCollection
+}
+
+func RunShermo(config *ShermoConfig, filePath string, energy string) {
+	// 获取文件名和输出文件夹路径
+	file := filepath.Base(filePath)
+	fileName := strings.TrimSuffix(file, filepath.Ext(file))
+	outputDir := filepath.Join(".", "output")
+	// 得到 file 文件的绝对路径
+	absPath, err := filepath.Abs(filePath)
+
+	// 运行 Shermo 程序所需要的参数
+	args := []string{
+		config.ShermoPath,
+		absPath,
+		"-E", energy,
+		"-prtvib", config.Prtvib,
+		"-T", config.T,
+		"-P", config.P,
+		"-sclZPE", config.SclZPE,
+		"-sclheat", config.SclHeat,
+		"-sclS", config.SclS,
+		"-sclCV", config.SclCV,
+		"-ilowfreq", config.Ilowfreq,
+		"-ravib", config.Ravib,
+		"-imode", config.Imode,
+		"-conc", config.Conc,
+		"-outshm", config.Outshm,
+		"-defmass", config.Defmass,
+	}
+
+	// 同时输出命令
+	fmt.Println(strings.Join(args, " "))
+
+	// 通过命令行运行 Shermo
+	cmd := exec.Command(args[0], args[1:]...)
+	result, err := cmd.CombinedOutput()
+
+	if err == nil {
+		fmt.Println()
+		fmt.Printf("Hint: Shermo completed successfully on file %s.\n\n", file)
+		contents := string(result)
+		// 写入输出数据到文件
+		outputFile := filepath.Join(outputDir, fileName+".txt")
+		err = ioutil.WriteFile(outputFile, []byte(contents), 0644)
+		if err != nil {
+			fmt.Printf("Error writing output file: %v\n", err)
+		}
+	} else {
+		fmt.Println()
+		fmt.Printf("Hint: Shermo execution failed on file %s.\n", file)
+	}
+}
+
+func RunAllShermo(config *ShermoConfig, energies []results) {
+	// 注册输入文件夹
+	optDir := filepath.Join(".", "opt")
+	// 注册输入文件夹里所有的 out 文件
+	files, err := filepath.Glob(filepath.Join(optDir, "*.out"))
+	if err != nil {
+		fmt.Printf("Error: failed to get files from directory %s\n", optDir)
+		return
+	}
+
+	// 遍历所有的 files 文件和 result 集合，并全部调用 RunShermo 方法
+	for i, file := range files {
+		// 检查文件是否存在
+		if _, err := os.Stat(file); os.IsNotExist(err) {
+			fmt.Printf("Error: file %s not found.\n", file)
+			continue
+		}
+
+		// 获取能量值
+		energy := energies[i].Energy
+
+		// 调用 RunShermo 函数
+		RunShermo(config, file, energy)
+	}
 }
 
 /*
@@ -260,25 +342,30 @@ func main() {
 	fmt.Printf("EasyShermo home website: %s\n", versionInfo["website"])
 	fmt.Println()
 
-	// 读取 ShermoConfig
+	// 读取 ShermoConfig 配置，并输出到屏幕
 	shermoConfig, _ := NewShermoConfig()
 	fmt.Println(shermoConfig)
 	fmt.Println()
 
 	// 将 spFile 转化为 int 类型
 	spFileValue, _ := strconv.Atoi(shermoConfig.SpFile)
-
-	// 如果 settings.ini 中设置为 1，则读取 orca
+	// 如果 settings.ini 中设置为 1，则读取 gaussian
 	if spFileValue == 1 {
 		// 调用 GetGaussianEnergy 函数获取结果
 		result := GetGaussianEnergy()
-		fmt.Println(result)
+		RunAllShermo(shermoConfig, result)
 	}
 	// 如果 settings.ini 中设置为 2，则读取 orca
 	if spFileValue == 2 {
 		// 调用 GetOrcaEnergy 函数获取结果
 		result := GetOrcaEnergy()
-		fmt.Println(result)
+		RunAllShermo(shermoConfig, result)
 	}
 
+	// 获取当前日期和时间
+	now := time.Now().Format("Jan-02-2006, 15:04:05") // 程序结束后提示版权信息和问候语
+	// 程序结束后提示版权信息和问候语
+	fmt.Println("Thank you for using our plotting tool! Have a great day!")
+	fmt.Println("Copyright © 2023 Kimariyb. All rights reserved.")
+	fmt.Printf("Currently timeline: %s\n", now)
 }

@@ -1,5 +1,6 @@
-from config import ShermoConfig
-from easyShermo import run_all_shermo
+import datetime
+
+from easyShermo import run_all_shermo, ShermoConfig
 
 
 def welcome():
@@ -33,7 +34,12 @@ def main():
     shermo_config = welcome()
     # 运行主程序
     run_all_shermo(shermo_config)
-
+    # 获取当前日期和时间
+    now = datetime.datetime.now().strftime("%b-%d-%Y, 00:45:%S")
+    # 程序结束后提示版权信息和问候语
+    print(f"Thank you for using our plotting tool! Have a great day!")
+    print("Copyright © 2023 Kimariyb. All rights reserved.")
+    print(f"Currently timeline: {now}")
 
 if __name__ == '__main__':
     main()
