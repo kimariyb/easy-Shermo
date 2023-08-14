@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 	"regexp"
 	"strconv"
+	"strings"
 )
 
 /*
@@ -87,6 +88,98 @@ func (s *ShermoConfig) String() string {
 type results struct {
 	FileName string
 	Energy   string
+}
+
+func findLastMatch(contents string, regex *regexp.Regexp, groupIndex int) (string, error) {
+	// 使用正则表达式在字符串中查找所有匹配项
+	matches := regex.FindAllStringSubmatch(contents, -1)
+	// 获取第二个匹配项
+	if len(matches) >= 2 {
+		secondMatch := matches[1]
+		if len(secondMatch) > groupIndex {
+			return secondMatch[groupIndex], nil
+		}
+	}
+	return "", fmt.Errorf("No energy found")
+}
+
+func GetGaussianEnergy() []results {
+	// 创建一个切片用来存放每一个文件对应的 results
+	var resultsCollection []results
+
+	// 得到当前文件下的 sp 文件夹下的所有 out 文件名
+	filePattern := filepath.Join("sp", "*.out")
+	filesName, err := filepath.Glob(filePattern)
+	if err != nil {
+		fmt.Println("获取文件列表时发生错误:", err)
+		return resultsCollection
+	}
+	// 遍历 filesName 切片，将每一个 results 存放在 resultsCollection 切片中
+	for _, fileName := range filesName {
+		// 通过 fileName 打开文件
+		file, err := os.Open(fileName)
+		if err != nil {
+			fmt.Println("无法打开文件:", err)
+			continue
+		}
+		defer file.Close()
+
+		// 读取文件内容为 Bytes
+		contentsBytes, err := io.ReadAll(file)
+		// Bytes 转化为字符串
+		contentsString := string(contentsBytes)
+		// 替换空格和制表符
+		contentsString = strings.ReplaceAll(contentsString, " ", "")
+		contentsString = strings.ReplaceAll(contentsString, "\n", "")
+
+		if err != nil {
+			fmt.Println("读取文件时发生错误:", err)
+			continue
+		}
+
+		// 使用正则表达式搜索 gaussian 单点能
+		ccsdTRegex := regexp.MustCompile(`CCSD\(T\)=\s*(-?\d+\.\d+)`)
+		mp2Regex := regexp.MustCompile(`MP2=\s*(-?\d+\.\d+)`)
+		hfRegex := regexp.MustCompile(`HF=\s*(-?\d+\.\d+)`)
+
+		// 首先匹配是否存在 CCSD(T) 的能量，如果存在则直接读取，并将结果保存在 results 中
+		ccsdTEnergy, err := findLastMatch(contentsString, ccsdTRegex, 1)
+		if err == nil {
+			fmt.Println("CCSD(T) Energy:", ccsdTEnergy)
+			fileResults := results{
+				FileName: fileName,
+				Energy:   ccsdTEnergy,
+			}
+			resultsCollection = append(resultsCollection, fileResults)
+			continue
+		}
+		// 如果不存在 CCSD(T) 的能量，但是存在 MP2 能量，则将 MP2 结果保存在 results 中
+		mp2Energy, err := findLastMatch(contentsString, mp2Regex, 1)
+		if err == nil {
+			fmt.Println("MP2 Energy:", mp2Energy)
+			fileResults := results{
+				FileName: fileName,
+				Energy:   mp2Energy,
+			}
+			resultsCollection = append(resultsCollection, fileResults)
+			continue
+		}
+		// 如果不存在 CCSD(T) 和 MP2 的能量，但是存在 HF 能量，则将 HF 结果保存在 results 中
+		hfEnergy, err := findLastMatch(contentsString, hfRegex, 1)
+		if err == nil {
+			fmt.Println("HF Energy:", hfEnergy)
+			fileResults := results{
+				FileName: fileName,
+				Energy:   hfEnergy,
+			}
+			resultsCollection = append(resultsCollection, fileResults)
+			continue
+		}
+
+		fmt.Println("未找到能量值:", fileName)
+	}
+
+	return resultsCollection
 }
 
 func GetOrcaEnergy() []results {
@@ -176,7 +269,11 @@ func main() {
 	spFileValue, _ := strconv.Atoi(shermoConfig.SpFile)
 
 	// 如果 settings.ini 中设置为 1，则读取 orca
-
+	if spFileValue == 1 {
+		// 调用 GetGaussianEnergy 函数获取结果
+		result := GetGaussianEnergy()
+		fmt.Println(result)
+	}
 	// 如果 settings.ini 中设置为 2，则读取 orca
 	if spFileValue == 2 {
 		// 调用 GetOrcaEnergy 函数获取结果
