@@ -22,7 +22,7 @@ git clone https://github.com/kimariyb/easy-shermo.git
 
 ### 直接下载编译好的 EasyShermo
 
-EasyShermo 的作者 Kimariyb 同时用 Go 语言将 EasyShermo 编译打包了一遍，实现的效果和用 Python 语言的相差无几。
+EasyShermo 的作者 Kimariyb 同时用 Go 语言将 EasyShermo 编译打包了一遍，实现的效果和用 Python 语言的相差无几。可以前往 https://github.com/kimariyb/easy-Shermo/releases/tag/v1.2.2 下载已经编译好的 EasyShermo，下载后解压即可。
 
 ## 使用
 
@@ -148,7 +148,7 @@ python main.py
 
 ### 直接运行
 
-EasyShermo 可以直接通过可执行文件运行，省去了下载 Python 和配置 Python 环境变量的步骤，对于不会编程的人来说相当友好。
+EasyShermo 可以直接通过已经编译好的可执行文件运行，省去了下载 Python 和配置 Python 环境变量的步骤，对于不会编程的人来说相当友好。使用的步骤和用 Python 脚本的步骤一致，只是省略了安装 Python 和相关的库。
 
 ## 有关 Shermo
 
