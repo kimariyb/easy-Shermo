@@ -5,6 +5,8 @@ import subprocess
 import configparser
 import os.path
 
+
+# 用于解析 settings.ini 文件的配置类
 class ShermoConfig:
     def __init__(self):
         self.__settings_path = os.path.join(os.path.dirname(__file__), "settings.ini")
@@ -39,10 +41,9 @@ class ShermoConfig:
                f"ilowfreq={self.ilowfreq}, ravib={self.ravib}, imode={self.imode}, conc={self.conc}, outshm={self.outshm}, " \
                f"defmass={self.defmass}"
 
-class ParserFactory:
-    def __init__(self):
-        pass
 
+# 使用工厂模式创建相关的 Parser
+class ParserFactory:
     @staticmethod
     def create_parser(shermo_config: ShermoConfig):
         """
@@ -59,18 +60,9 @@ class ParserFactory:
 
 
 class Parser:
-    def __init__(self):
-        pass
-
     def find_energy(self, contents):
         """
         在文件内容中查找能量值
-        """
-        raise NotImplementedError
-
-    def process_files(self, file_pattern):
-        """
-        处理匹配给定文件模式的所有文件，并返回单点能
         """
         raise NotImplementedError
 
@@ -83,9 +75,6 @@ class Parser:
 
 
 class OrcaParser(Parser):
-    def __init__(self):
-        super().__init__()
-
     def find_energy(self, contents):
         """
         在文件内容中查找能量值
@@ -99,14 +88,19 @@ class OrcaParser(Parser):
         else:
             raise ValueError('No energy found')
 
-    def process_files(self, file_pattern):
+    def get_sp(self):
         """
-        处理匹配给定文件模式的所有文件，并返回单点能
+        获得 sp 目录下的所有 orca 文件的单点能
+        :return: 所有文件的单点能量和文件名组成的列表
         """
-        files = glob.glob(file_pattern)
+        print()
+        print('The single point energy: ')
+        # 得到当前文件夹下的 sp 文件夹下的所有 .out 文件
+        dir_path = os.path.join(os.getcwd(), 'sp', "*.out")
+        sp_files = glob.glob(dir_path)
         results = []
-
-        for file in files:
+        # 遍历 sp files 得到每一个 sp 文件中的单点能
+        for file in sp_files:
             try:
                 with open(file, 'r', encoding='utf-8') as f:
                     contents = f.read()
@@ -118,21 +112,8 @@ class OrcaParser(Parser):
 
         return results
 
-    def get_sp(self):
-        """
-        获得 sp 目录下的所有 orca 文件的单点能
-        :return: 所有文件的单点能量和文件名组成的列表
-        """
-        print()
-        print('The single point energy: ')
-        dir_path = os.path.join(os.getcwd(), 'sp')
-        return self.process_files(os.path.join(dir_path, '*.out'))
-
 
 class GaussianParser(Parser):
-    def __init__(self):
-        super().__init__()
-
     def find_energy(self, contents):
         """
         在文件内容中查找能量值
@@ -161,14 +142,19 @@ class GaussianParser(Parser):
                 else:
                     raise ValueError('No energy found')
 
-    def process_files(self, file_pattern):
+    def get_sp(self):
         """
-        处理匹配给定文件模式的所有文件，并返回单点能
+        处理 gaussian 单点任务产生的 out 文件，并且返回单点能
+        :return: 所有文件的单点能量和文件名组成的列表
         """
-        files = glob.glob(file_pattern)
+        print()
+        print('The single point energy: ')
+        # 得到当前文件夹下的 sp 文件夹下的所有 .out 文件
+        dir_path = os.path.join(os.getcwd(), 'sp', '*.out')
+        sp_files = glob.glob(dir_path)
         results = []
-
-        for file in files:
+        # 遍历 sp files 得到每一个 sp 文件中的单点能
+        for file in sp_files:
             try:
                 with open(file, 'r', encoding="utf-8") as f:
                     contents = f.read().replace(' ', '').replace('\n', '')
@@ -179,16 +165,6 @@ class GaussianParser(Parser):
                 print(f'Error: Failed to read {file}: {e}')
 
         return results
-
-    def get_sp(self):
-        """
-        处理 gaussian 单点任务产生的 out 文件，并且返回单点能
-        :return: 所有文件的单点能量和文件名组成的列表
-        """
-        print()
-        print('The single point energy: ')
-        dir_path = os.path.join(os.getcwd(), 'sp')
-        return self.process_files(os.path.join(dir_path, '*.out'))
 
 
 def run_shermo(shermo_config: ShermoConfig, file_path, energy):
@@ -259,5 +235,3 @@ def run_all_shermo(shermo_config: ShermoConfig):
             run_shermo(shermo_config, file, energy[1])
         else:
             print(f"Error: file {file} not found.")
-
-

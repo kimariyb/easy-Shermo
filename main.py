@@ -9,11 +9,11 @@ def welcome():
     """
     # 定义版本信息
     version_info = {
-        'version': 'v1.2.1',
+        'version': 'v1.2.2',
         'release_date': 'Aug-3-2023',
         'developer': 'Kimariyb, Ryan Hsiun',
         'address': 'XiaMen University, School of Electronic Science and Engineering',
-        'website': 'https://github.com/kimariyb/kimariPlot',
+        'website': 'https://github.com/kimariyb/easy-shermo',
     }
 
     print(f"EasyShermo -- A python script to automate the use of Shermo")
