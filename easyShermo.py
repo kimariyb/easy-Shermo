@@ -1,3 +1,23 @@
+# -*- coding: utf-8 -*-
+"""
+easyShermo.py
+Briefly describe the functionality and purpose of the file.
+
+This is a Main function file!
+
+This file is part of EasyShermo.
+EasyShermo is a Python script that automate the use of Shermo
+
+@author:
+Kimariyb (kimariyb@163.com)
+
+@license:
+Licensed under the MIT License.
+For details, see the LICENSE file.
+
+@Data:
+2023-09-12
+"""
 import glob
 import os
 import re
@@ -5,35 +25,83 @@ import subprocess
 import configparser
 import os.path
 
+from datetime import datetime
 
-# 用于解析 settings.ini 文件的配置类
+# 获取当前文件被修改的最后一次时间
+time_last = os.path.getmtime(os.path.abspath(__file__))
+# 全局的静态变量
+__version__ = "v1.2.3"
+__developer__ = "Kimariyb, Ryan Hsiun"
+__address__ = "XiaMen University, School of Electronic Science and Engineering"
+__website__ = "https://github.com/kimariyb/easy-shermo"
+__release__ = str(datetime.fromtimestamp(time_last).strftime("%b-%d-%Y"))
+
+
 class ShermoConfig:
+    """
+    用于解析 settings.ini 文件的配置类
+
+    Attributes:
+        shermoPath: The path to the Shermo executable file.
+        spFile: The program for performing a single point calculation task.
+            1. Gaussian
+            2. Orca
+        prtvib: Printing contribution of each vibrational mode.
+            -1: Printing to vibcontri.txt.
+            1: Printing contribution of each vibrational mode.
+            0: Do not print
+        T: Temperature in K.
+        P: Pressure in atm.
+        sclZPE: Frequency scale factor for ZPE
+        sclheat: Frequency scale factor for U(T)-U(0)
+        sclS: Frequency scale factor for S(T)
+        sclCV: Frequency scale factor for heat capacity
+        ilowfreq: Treatment of low frequencies.
+            0: Harmonic.
+            1: Raising low frequencies.
+            2: Entropy interpolation.
+            3: Entropy and internal energy interpolations
+        ravib: Raising lower frequencies to this value (cm^-1) when ilowfreq=1
+        imode: Mode of evaluating thermodynamic quantities.
+            0: Consider all terms.
+            1: Ignore translation and rotation
+        conc: If not 0, will calculate variation of Gibbs free energy due to concentration change from present state
+        to the specific state.
+        outshm: Exporting .shm file after loading QC program output file.
+            1: Exporting .shm file after loading QC program output file.
+            0: Do not export
+        defmass: Default atomic masses used during reading QC program output file.
+            1: Element mass.
+            2: Most abundant isotope.
+            3: Same as the output file
+    """
+
     def __init__(self):
         self.__settings_path = os.path.join(os.path.dirname(__file__), "settings.ini")
         # 创建 ini config 对象
         self.config = configparser.ConfigParser()
         # 设置注释前缀
         self.config.comment_prefixes = ';'
-        # 读取 ini 文件的配置
-        self.config.read(self.__settings_path)
-        # 将配置返回成对象
-        self.shermo_config = self.config['Shermo']
+
+        # 添加一个虚拟的section头部
+        self.config.read_string('[DEFAULT]\n' + open(self.__settings_path).read())
+
         # 获取配置项
-        self.shermoPath = self.shermo_config.get('shermoPath')
-        self.spFile = self.shermo_config.get('spFile')
-        self.prtvib = self.config.get('Shermo', 'prtvib')
-        self.T = self.config.get('Shermo', 'T')
-        self.P = self.config.get('Shermo', 'P')
-        self.sclZPE = self.config.get('Shermo', 'sclZPE')
-        self.sclheat = self.config.get('Shermo', 'sclheat')
-        self.sclS = self.config.get('Shermo', 'sclS')
-        self.sclCV = self.config.get('Shermo', 'sclCV')
-        self.ilowfreq = self.config.get('Shermo', 'ilowfreq')
-        self.ravib = self.config.get('Shermo', 'ravib')
-        self.imode = self.config.get('Shermo', 'imode')
-        self.conc = self.config.get('Shermo', 'conc')
-        self.outshm = self.config.get('Shermo', 'outshm')
-        self.defmass = self.config.get('Shermo', 'defmass')
+        self.shermoPath = self.config.get('DEFAULT', 'shermoPath')
+        self.spFile = self.config.get('DEFAULT', 'spFile')
+        self.prtvib = self.config.get('DEFAULT', 'prtvib')
+        self.T = self.config.get('DEFAULT', 'T')
+        self.P = self.config.get('DEFAULT', 'P')
+        self.sclZPE = self.config.get('DEFAULT', 'sclZPE')
+        self.sclheat = self.config.get('DEFAULT', 'sclheat')
+        self.sclS = self.config.get('DEFAULT', 'sclS')
+        self.sclCV = self.config.get('DEFAULT', 'sclCV')
+        self.ilowfreq = self.config.get('DEFAULT', 'ilowfreq')
+        self.ravib = self.config.get('DEFAULT', 'ravib')
+        self.imode = self.config.get('DEFAULT', 'imode')
+        self.conc = self.config.get('DEFAULT', 'conc')
+        self.outshm = self.config.get('DEFAULT', 'outshm')
+        self.defmass = self.config.get('DEFAULT', 'defmass')
 
     def __str__(self):
         return f"The ShermoConfig is: shermoPath={self.shermoPath}, spFile={self.spFile}, prtvib={self.prtvib}, T={self.T}, " \
@@ -48,8 +116,12 @@ class ParserFactory:
     def create_parser(shermo_config: ShermoConfig):
         """
         工厂方法，创建一个 Parser 对象
-        :param shermo_config: 配置文件对象
-        :return:
+
+        Args:
+            shermo_config(ShermoConfig): Shermo 配置类
+
+        Returns:
+            GaussianParser 或者 OrcaParser
         """
         if shermo_config.spFile == "1":
             return GaussianParser()
@@ -145,7 +217,9 @@ class GaussianParser(Parser):
     def get_sp(self):
         """
         处理 gaussian 单点任务产生的 out 文件，并且返回单点能
-        :return: 所有文件的单点能量和文件名组成的列表
+
+        Returns:
+            results: 所有文件的单点能量和文件名组成的列表
         """
         print()
         print('The single point energy: ')
@@ -170,9 +244,11 @@ class GaussianParser(Parser):
 def run_shermo(shermo_config: ShermoConfig, file_path, energy):
     """
     批量运行 Shermo，并生成 txt 文件记录内容
-    :param shermo_config: Shermo 配置对象
-    :param file_path: Shermo 运行文件
-    :param energy: 单点能量
+
+    Args:
+        shermo_config(ShermoConfig): Shermo 配置对象
+        file_path(str): Shermo 运行文件
+        energy(str): 单点能量
     """
     # 获取文件名和输出文件夹路径
     file = os.path.basename(file_path)
@@ -220,6 +296,9 @@ def run_shermo(shermo_config: ShermoConfig, file_path, energy):
 def run_all_shermo(shermo_config: ShermoConfig):
     """
     批量调用 Shermo
+
+    Args:
+        shermo_config(ShermoConfig): Shermo 配置类
     """
     # 获取基础配置信息和能量列表
     energies = ParserFactory().create_parser(shermo_config).get_sp()
@@ -235,3 +314,38 @@ def run_all_shermo(shermo_config: ShermoConfig):
             run_shermo(shermo_config, file, energy[1])
         else:
             print(f"Error: file {file} not found.")
+
+
+def welcome():
+    """
+    主页面信息
+    """
+
+    print(f"EasyShermo -- A python script to automate the use of Shermo")
+    print(f"Version: {__version__}, release date: {__release__}")
+    print(f"Developer: {__developer__}")
+    print(f"Address: {__address__}")
+    print(f"EasyShermo home website: {__website__}\n")
+
+    # 在启动时就读取 settings.ini 并返回对象
+    shermo_config = ShermoConfig()
+    # 打印配置文件信息
+    print(shermo_config)
+    return shermo_config
+
+
+def main():
+    # 主页面
+    shermo_config = welcome()
+    # 运行主程序
+    run_all_shermo(shermo_config)
+    # 获取当前日期和时间
+    now = datetime.now().strftime("%b-%d-%Y, %H:%M:%S")
+    # 程序结束后提示版权信息和问候语
+    print(f"Thank you for using our plotting tool! Have a great day!")
+    print("Copyright (C) 2023 Kimariyb. All rights reserved.")
+    print(f"Currently timeline: {now}")
+
+
+if __name__ == '__main__':
+    main()

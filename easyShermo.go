@@ -15,12 +15,21 @@ import (
 )
 
 /*
+EasyShermo 是厦门大学 Kimariyb 开发的一款全自动批处理使用 Shermo 计算热力学量的 Go 语言程序
+
+@Name: EasyShermo
+@Author: Kimariyb
+@Institution: XiaMen University
+@Data: 2023-09-12
+*/
+
+/*
 ******************
 对应 config.py
 ******************
 */
 
-// shermoConfig 用来记录 Shermo 的配置信息
+// ShermoConfig 用来记录 Shermo 的配置信息
 type ShermoConfig struct {
 	ShermoPath string
 	SpFile     string
@@ -55,22 +64,22 @@ func NewShermoConfig() (*ShermoConfig, error) {
 	}
 
 	// 读取配置项
-	section := cfg.Section("Shermo")
+	section := cfg.Section("")
 	s.ShermoPath = section.Key("shermoPath").String()
 	s.SpFile = section.Key("spFile").String()
-	s.Prtvib = cfg.Section("Shermo").Key("prtvib").String()
-	s.T = cfg.Section("Shermo").Key("T").String()
-	s.P = cfg.Section("Shermo").Key("P").String()
-	s.SclZPE = cfg.Section("Shermo").Key("sclZPE").String()
-	s.SclHeat = cfg.Section("Shermo").Key("sclheat").String()
-	s.SclS = cfg.Section("Shermo").Key("sclS").String()
-	s.SclCV = cfg.Section("Shermo").Key("sclCV").String()
-	s.Ilowfreq = cfg.Section("Shermo").Key("ilowfreq").String()
-	s.Ravib = cfg.Section("Shermo").Key("ravib").String()
-	s.Imode = cfg.Section("Shermo").Key("imode").String()
-	s.Conc = cfg.Section("Shermo").Key("conc").String()
-	s.Outshm = cfg.Section("Shermo").Key("outshm").String()
-	s.Defmass = cfg.Section("Shermo").Key("defmass").String()
+	s.Prtvib = section.Key("prtvib").String()
+	s.T = section.Key("T").String()
+	s.P = section.Key("P").String()
+	s.SclZPE = section.Key("sclZPE").String()
+	s.SclHeat = section.Key("sclheat").String()
+	s.SclS = section.Key("sclS").String()
+	s.SclCV = section.Key("sclCV").String()
+	s.Ilowfreq = section.Key("ilowfreq").String()
+	s.Ravib = section.Key("ravib").String()
+	s.Imode = section.Key("imode").String()
+	s.Conc = section.Key("conc").String()
+	s.Outshm = section.Key("outshm").String()
+	s.Defmass = section.Key("defmass").String()
 
 	return s, nil
 }
@@ -366,6 +375,6 @@ func main() {
 	now := time.Now().Format("Jan-02-2006, 15:04:05") // 程序结束后提示版权信息和问候语
 	// 程序结束后提示版权信息和问候语
 	fmt.Println("Thank you for using our plotting tool! Have a great day!")
-	fmt.Println("Copyright © 2023 Kimariyb. All rights reserved.")
+	fmt.Println("Copyright (C) 2023 Kimariyb. All rights reserved.")
 	fmt.Printf("Currently timeline: %s\n", now)
 }

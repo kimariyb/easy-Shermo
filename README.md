@@ -31,7 +31,6 @@ EasyShermo 的作者 Kimariyb 同时用 Go 语言将 EasyShermo 编译打包了�
 1. 在使用 EasyShermo 之前，可以根据自己的需要配置好 `settings.ini`，`settings.ini` 中大部分的配置选项和 Shermo 的 `settings.ini` 一致。在使用 EasyShermo 前，必须配置 `settings.ini` 中的 `shermoPath`。
 
 ```ini
-[Shermo]
 ; The path to the Shermo executable file.
 shermoPath = D:\\environment\\Shermo\\Shermo.exe
 
@@ -117,7 +116,7 @@ defmass = 3
 3. 一切准备就绪之后，运行命令启动项目。EasyShermo 首先会扫描 `sp` 目录下的所有文件，并得到单点能。之后通过命令行批量调用 Shermo 执行 `opt` 目录下的文件。最后将 Shermo 输出内容写入到 `output` 文件夹的文本文件中，文件名与 `opt` 中的文件相同。
 
 ```shell
-python main.py
+python easyShermo.py
 ```
 
 `output` 文件夹里的所有文件的内容，都和单独使用 Shermo 输出的内容一致。
