@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"gopkg.in/ini.v1"
 	"io"
 	"io/ioutil"
 	"os"
@@ -12,6 +11,8 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"gopkg.in/ini.v1"
 )
 
 /*
@@ -42,6 +43,8 @@ type ShermoConfig struct {
 	SclCV      string
 	Ilowfreq   string
 	Ravib      string
+	Intpvib    string
+	Imagreal   string
 	Imode      string
 	Conc       string
 	Outshm     string
@@ -76,6 +79,8 @@ func NewShermoConfig() (*ShermoConfig, error) {
 	s.SclCV = section.Key("sclCV").String()
 	s.Ilowfreq = section.Key("ilowfreq").String()
 	s.Ravib = section.Key("ravib").String()
+	s.Intpvib = section.Key("intpvib").String()
+	s.Imagreal = section.Key("imagreal").String()
 	s.Imode = section.Key("imode").String()
 	s.Conc = section.Key("conc").String()
 	s.Outshm = section.Key("outshm").String()
@@ -86,9 +91,9 @@ func NewShermoConfig() (*ShermoConfig, error) {
 
 func (s *ShermoConfig) String() string {
 	return fmt.Sprintf("The ShermoConfig is: shermoPath=%s, spFile=%s, prtvib=%s, T=%s, P=%s, sclZPE=%s, sclheat=%s, "+
-		"sclS=%s, sclCV=%s, ilowfreq=%s, ravib=%s, imode=%s, conc=%s, outshm=%s, defmass=%s",
-		s.ShermoPath, s.SpFile, s.Prtvib, s.T, s.P, s.SclZPE, s.SclHeat, s.SclS, s.SclCV, s.Ilowfreq, s.Ravib,
-		s.Imode, s.Conc, s.Outshm, s.Defmass)
+		"sclS=%s, sclCV=%s, ilowfreq=%s, ravib=%s, intpvib=%s, imagreal=%s, imode=%s, conc=%s, outshm=%s, defmass=%s",
+		s.ShermoPath, s.SpFile, s.Prtvib, s.T, s.P, s.SclZPE, s.SclHeat, s.SclS, s.SclCV, s.Ilowfreq, s.Ravib, s.Intpvib,
+		s.Imagreal, s.Imode, s.Conc, s.Outshm, s.Defmass)
 }
 
 /*
@@ -112,6 +117,7 @@ func FindLastMatch(contents string, regex *regexp.Regexp, groupIndex int) (strin
 			return secondMatch[groupIndex], nil
 		}
 	}
+
 	return "", fmt.Errorf("No energy found")
 }
 
@@ -337,8 +343,8 @@ func RunAllShermo(config *ShermoConfig, energies []results) {
 func main() {
 	// 版权信息
 	versionInfo := map[string]string{
-		"version":      "v1.2.1",
-		"release_date": "Aug-3-2023",
+		"version":      "v1.3.0",
+		"release_date": "Jun-10-2024",
 		"developer":    "Kimariyb, Ryan Hsiun",
 		"address":      "XiaMen University, School of Electronic Science and Engineering",
 		"website":      "https://github.com/kimariyb/kimariPlot",
@@ -377,4 +383,6 @@ func main() {
 	fmt.Println("Thank you for using our plotting tool! Have a great day!")
 	fmt.Println("Copyright (C) 2023 Kimariyb. All rights reserved.")
 	fmt.Printf("Currently timeline: %s\n", now)
+	// 程序结束后等待用户输入
+	fmt.Scanln()
 }
