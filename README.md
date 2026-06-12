@@ -73,11 +73,11 @@ The project is developed and maintained by **Kimariyb** at **Xiamen University, 
 EasyShermo follows a three-step pipeline:
 
 ```
-┌─────────────────┐     ┌──────────────────┐     ┌────────────────────┐
+┌────────────────-─┐     ┌───────────────-───┐     ┌────────────────────┐
 │  1. Extract      │     │  2. Pair &        │     │  3. Batch          │
-│  Single-Point     │ ──→ │  Match            │ ──→ │  Invoke Shermo     │
+│  Single-Point    │ ──→ │  Match            │ ──→ │  Invoke Shermo     │
 │  Energies        │     │  Files            │     │                    │
-├─────────────────┤     ├──────────────────┤     ├────────────────────┤
+├───────────────-──┤     ├───────────-───────┤     ├────────────────────┤
 │ Scan sp/ dir     │     │ xxx_sp.out  ──→   │     │ For each pair:     │
 │ Gaussian:        │     │   xxx_opt.out     │     │   shermo opt.out   │
 │  CCSD(T) > MP2   │     │                   │     │   -E energy        │
@@ -85,7 +85,7 @@ EasyShermo follows a three-step pipeline:
 │ ORCA:            │     │ matching, no      │     │   flags>           │
 │  FINAL SINGLE    │     │ order dependency  │     │                    │
 │  POINT ENERGY    │     │                   │     │ Output → output/   │
-└─────────────────┘     └──────────────────┘     └────────────────────┘
+└──────────────-───┘     └───────────-───────┘     └────────────────────┘
 ```
 
 **Step 1 — Energy Extraction**: Scans all files in the single-point (`sp/`) directory. For Gaussian output, it searches for the highest-level energy in priority order: **CCSD(T)** → **MP2** → **HF**, taking the last occurrence of each. For ORCA output, it extracts `FINAL SINGLE POINT ENERGY`.
