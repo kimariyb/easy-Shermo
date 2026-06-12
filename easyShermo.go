@@ -1,388 +1,473 @@
 package main
 
 import (
+	"flag"
 	"fmt"
-	"io"
-	"io/ioutil"
+	"log/slog"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"regexp"
-	"strconv"
+	"sort"
 	"strings"
 	"time"
 
-	"gopkg.in/ini.v1"
+	"gopkg.in/yaml.v3"
 )
 
-/*
-EasyShermo 是厦门大学 Kimariyb 开发的一款全自动批处理使用 Shermo 计算热力学量的 Go 语言程序
+// ---------------------------------------------------------------------------
+// 版本信息
+// ---------------------------------------------------------------------------
 
-@Name: EasyShermo
-@Author: Kimariyb
-@Institution: XiaMen University
-@Data: 2023-09-12
-*/
+const (
+	version   = "v2.0.0"
+	developer = "Kimariyb, Ryan Hsiun"
+	address   = "XiaMen University, School of Electronic Science and Engineering"
+	website   = "https://github.com/kimariyb/easy-shermo"
+)
 
-/*
-******************
-对应 config.py
-******************
-*/
+// ---------------------------------------------------------------------------
+// 配置文件结构
+// ---------------------------------------------------------------------------
 
-// ShermoConfig 用来记录 Shermo 的配置信息
+// ShermoConfig 映射 config.yaml 的所有字段
 type ShermoConfig struct {
-	ShermoPath string
-	SpFile     string
-	Prtvib     string
-	T          string
-	P          string
-	SclZPE     string
-	SclHeat    string
-	SclS       string
-	SclCV      string
-	Ilowfreq   string
-	Ravib      string
-	Intpvib    string
-	Imagreal   string
-	Imode      string
-	Conc       string
-	Outshm     string
-	Defmass    string
-}
-
-func NewShermoConfig() (*ShermoConfig, error) {
-	s := &ShermoConfig{}
-
-	// 获取当前工作目录
-	currentDir, _ := os.Getwd()
-
-	// 获取 settings.ini 文件的路径
-	settingsPath := filepath.Join(currentDir, "settings.ini")
-
-	// 创建 ini config 对象
-	cfg, err := ini.Load(settingsPath)
-	if err != nil {
-		return nil, err
-	}
-
-	// 读取配置项
-	section := cfg.Section("")
-	s.ShermoPath = section.Key("shermoPath").String()
-	s.SpFile = section.Key("spFile").String()
-	s.Prtvib = section.Key("prtvib").String()
-	s.T = section.Key("T").String()
-	s.P = section.Key("P").String()
-	s.SclZPE = section.Key("sclZPE").String()
-	s.SclHeat = section.Key("sclheat").String()
-	s.SclS = section.Key("sclS").String()
-	s.SclCV = section.Key("sclCV").String()
-	s.Ilowfreq = section.Key("ilowfreq").String()
-	s.Ravib = section.Key("ravib").String()
-	s.Intpvib = section.Key("intpvib").String()
-	s.Imagreal = section.Key("imagreal").String()
-	s.Imode = section.Key("imode").String()
-	s.Conc = section.Key("conc").String()
-	s.Outshm = section.Key("outshm").String()
-	s.Defmass = section.Key("defmass").String()
-
-	return s, nil
+	ShermoPath string `yaml:"shermoPath"`
+	SpFile     int    `yaml:"spFile"`
+	SpDir      string `yaml:"spDir"`
+	OptDir     string `yaml:"optDir"`
+	OutputDir  string `yaml:"outputDir"`
+	Prtvib     int    `yaml:"prtvib"`
+	T          string `yaml:"T"`
+	P          string `yaml:"P"`
+	SclZPE     string `yaml:"sclZPE"`
+	SclHeat    string `yaml:"sclheat"`
+	SclS       string `yaml:"sclS"`
+	SclCV      string `yaml:"sclCV"`
+	Ilowfreq   int    `yaml:"ilowfreq"`
+	Ravib      string `yaml:"ravib"`
+	Intpvib    string `yaml:"intpvib"`
+	Imagreal   string `yaml:"imagreal"`
+	Imode      int    `yaml:"imode"`
+	Conc       string `yaml:"conc"`
+	Outshm     int    `yaml:"outshm"`
+	Defmass    int    `yaml:"defmass"`
 }
 
 func (s *ShermoConfig) String() string {
-	return fmt.Sprintf("The ShermoConfig is: shermoPath=%s, spFile=%s, prtvib=%s, T=%s, P=%s, sclZPE=%s, sclheat=%s, "+
-		"sclS=%s, sclCV=%s, ilowfreq=%s, ravib=%s, intpvib=%s, imagreal=%s, imode=%s, conc=%s, outshm=%s, defmass=%s",
-		s.ShermoPath, s.SpFile, s.Prtvib, s.T, s.P, s.SclZPE, s.SclHeat, s.SclS, s.SclCV, s.Ilowfreq, s.Ravib, s.Intpvib,
-		s.Imagreal, s.Imode, s.Conc, s.Outshm, s.Defmass)
+	return fmt.Sprintf(
+		"ShermoConfig(shermoPath=%s, spFile=%d, spDir=%s, optDir=%s, outputDir=%s, "+
+			"prtvib=%d, T=%s, P=%s, sclZPE=%s, sclheat=%s, sclS=%s, sclCV=%s, "+
+			"ilowfreq=%d, ravib=%s, intpvib=%s, imagreal=%s, imode=%d, conc=%s, "+
+			"outshm=%d, defmass=%d)",
+		s.ShermoPath, s.SpFile, s.SpDir, s.OptDir, s.OutputDir,
+		s.Prtvib, s.T, s.P, s.SclZPE, s.SclHeat, s.SclS, s.SclCV,
+		s.Ilowfreq, s.Ravib, s.Intpvib, s.Imagreal, s.Imode, s.Conc,
+		s.Outshm, s.Defmass,
+	)
 }
 
-/*
-******************
-对应 easyShermo.py
-******************
-*/
+func defaultConfig() ShermoConfig {
+	return ShermoConfig{
+		SpDir:     "sp",
+		OptDir:    "opt",
+		OutputDir: "output",
+		SpFile:    1,
+		Prtvib:    0,
+		T:         "298.15",
+		P:         "1.0",
+		SclZPE:    "1.0",
+		SclHeat:   "1.0",
+		SclS:      "1.0",
+		SclCV:     "1.0",
+		Ilowfreq:  2,
+		Ravib:     "100",
+		Intpvib:   "100",
+		Imagreal:  "20",
+		Imode:     0,
+		Conc:      "0",
+		Outshm:    0,
+		Defmass:   3,
+	}
+}
 
-type results struct {
+// ---------------------------------------------------------------------------
+// YAML 配置加载
+// ---------------------------------------------------------------------------
+
+func loadConfig(path string) (*ShermoConfig, error) {
+	data, err := os.ReadFile(path)
+	if err != nil {
+		return nil, fmt.Errorf("读取配置文件失败: %w", err)
+	}
+
+	cfg := defaultConfig()
+	if err := yaml.Unmarshal(data, &cfg); err != nil {
+		return nil, fmt.Errorf("解析 YAML 失败: %w", err)
+	}
+
+	if cfg.ShermoPath == "" {
+		return nil, fmt.Errorf("config.yaml 中 shermoPath 不能为空")
+	}
+	if cfg.SpFile != 1 && cfg.SpFile != 2 {
+		return nil, fmt.Errorf("spFile 只能为 1 (Gaussian) 或 2 (ORCA)，收到 %d", cfg.SpFile)
+	}
+
+	return &cfg, nil
+}
+
+// ---------------------------------------------------------------------------
+// 能量提取
+// ---------------------------------------------------------------------------
+
+// energyResult 保存单点能提取结果
+type energyResult struct {
 	FileName string
 	Energy   string
 }
 
-func FindLastMatch(contents string, regex *regexp.Regexp, groupIndex int) (string, error) {
-	// 使用正则表达式在字符串中查找所有匹配项
-	matches := regex.FindAllStringSubmatch(contents, -1)
-	// 获取第二个匹配项
-	if len(matches) >= 2 {
-		secondMatch := matches[1]
-		if len(secondMatch) > groupIndex {
-			return secondMatch[groupIndex], nil
-		}
-	}
-
-	return "", fmt.Errorf("No energy found")
+// energyPattern 定义一种能量模式及其正则
+type energyPattern struct {
+	Name  string
+	Regex *regexp.Regexp
 }
 
-func GetGaussianEnergy() []results {
-	// 创建一个切片用来存放每一个文件对应的 results
-	var resultsCollection []results
+var gaussianPatterns = []energyPattern{
+	{"CCSD(T)", regexp.MustCompile(`CCSD\(T\)\s*=\s*(-?\d+\.\d+)`)},
+	{"MP2", regexp.MustCompile(`MP2\s*=\s*(-?\d+\.\d+)`)},
+	{"HF", regexp.MustCompile(`HF\s*=\s*(-?\d+\.\d+)`)},
+}
 
-	// 得到当前文件下的 sp 文件夹下的所有 out 文件名
-	filePattern := filepath.Join("sp", "*.out")
-	filesName, err := filepath.Glob(filePattern)
+var orcaPattern = regexp.MustCompile(`FINAL SINGLE POINT ENERGY\s+(-?\d+\.\d+)`)
+
+// lastMatch 返回正则的最后一个匹配的指定捕获组
+func lastMatch(contents string, re *regexp.Regexp, group int) (string, bool) {
+	matches := re.FindAllStringSubmatch(contents, -1)
+	if len(matches) == 0 {
+		return "", false
+	}
+	last := matches[len(matches)-1]
+	if len(last) <= group {
+		return "", false
+	}
+	return last[group], true
+}
+
+// extractGaussianEnergy 从 Gaussian 输出中按优先级提取能量
+func extractGaussianEnergy(contents string) (string, error) {
+	// 压缩空白符，适应 Gaussian 多变的输出格式
+	ws := regexp.MustCompile(`\s+`)
+	compact := ws.ReplaceAllString(contents, "")
+
+	for _, p := range gaussianPatterns {
+		if energy, ok := lastMatch(compact, p.Regex, 1); ok {
+			slog.Info("Gaussian 能量", "type", p.Name, "value", energy)
+			return energy, nil
+		}
+	}
+	return "", fmt.Errorf("未找到 Gaussian 单点能（尝试了 CCSD(T)、MP2、HF）")
+}
+
+// extractOrcaEnergy 从 ORCA 输出中提取能量
+func extractOrcaEnergy(contents string) (string, error) {
+	if energy, ok := lastMatch(contents, orcaPattern, 1); ok {
+		slog.Info("ORCA 能量", "value", energy)
+		return energy, nil
+	}
+	return "", fmt.Errorf("未找到 ORCA 单点能（FINAL SINGLE POINT ENERGY）")
+}
+
+// scanEnergies 扫描 spDir 目录下所有文件，提取单点能
+func scanEnergies(spDir string, spFile int) ([]energyResult, error) {
+	entries, err := os.ReadDir(spDir)
 	if err != nil {
-		fmt.Println("Error: failed to get files from directory", err)
-		return resultsCollection
-	}
-	// 遍历 filesName 切片，将每一个 results 存放在 resultsCollection 切片中
-	for _, fileName := range filesName {
-		// 通过 fileName 打开文件
-		file, err := os.Open(fileName)
-		if err != nil {
-			fmt.Println("Error: Unable to open the file", err)
-			continue
-		}
-		defer file.Close()
-
-		// 读取文件内容为 Bytes
-		contentsBytes, err := io.ReadAll(file)
-		// Bytes 转化为字符串
-		contentsString := string(contentsBytes)
-		// 替换空格
-		re := regexp.MustCompile(`\s+`)
-		contentsString = re.ReplaceAllString(contentsString, "")
-
-		if err != nil {
-			fmt.Println("Error: Failed to read", err)
-			continue
-		}
-
-		// 使用正则表达式搜索 gaussian 单点能
-		ccsdTRegex := regexp.MustCompile(`CCSD\(T\)=\s*(-?\d+\.\d+)`)
-		mp2Regex := regexp.MustCompile(`MP2=\s*(-?\d+\.\d+)`)
-		hfRegex := regexp.MustCompile(`HF=\s*(-?\d+\.\d+)`)
-
-		// 首先匹配是否存在 CCSD(T) 的能量，如果存在则直接读取，并将结果保存在 results 中
-		ccsdTEnergy, err := FindLastMatch(contentsString, ccsdTRegex, 1)
-		if err == nil {
-			fileResults := results{
-				FileName: fileName,
-				Energy:   ccsdTEnergy,
-			}
-			fmt.Println("The Single Point Energy [CCSD(T)] of " + fileName + " is : " + ccsdTEnergy)
-
-			resultsCollection = append(resultsCollection, fileResults)
-			continue
-		}
-		// 如果不存在 CCSD(T) 的能量，但是存在 MP2 能量，则将 MP2 结果保存在 results 中
-		mp2Energy, err := FindLastMatch(contentsString, mp2Regex, 1)
-		if err == nil {
-			fileResults := results{
-				FileName: fileName,
-				Energy:   mp2Energy,
-			}
-			fmt.Println("The Single Point Energy [MP2] of " + fileName + " is : " + mp2Energy)
-
-			resultsCollection = append(resultsCollection, fileResults)
-			continue
-		}
-		// 如果不存在 CCSD(T) 和 MP2 的能量，但是存在 HF 能量，则将 HF 结果保存在 results 中
-		hfEnergy, err := FindLastMatch(contentsString, hfRegex, 1)
-		if err == nil {
-			fileResults := results{
-				FileName: fileName,
-				Energy:   hfEnergy,
-			}
-			fmt.Println("The Single Point Energy [HF] of " + fileName + " is : " + mp2Energy)
-			resultsCollection = append(resultsCollection, fileResults)
-			continue
-		}
-
-		fmt.Println("No energy found", fileName)
+		return nil, fmt.Errorf("读取目录 %s 失败: %w", spDir, err)
 	}
 
-	return resultsCollection
+	var results []energyResult
+
+	for _, entry := range entries {
+		if entry.IsDir() {
+			continue
+		}
+		name := entry.Name()
+		path := filepath.Join(spDir, name)
+
+		data, err := os.ReadFile(path)
+		if err != nil {
+			slog.Warn("读取文件失败", "file", name, "error", err)
+			continue
+		}
+
+		var energy string
+		switch spFile {
+		case 1:
+			energy, err = extractGaussianEnergy(string(data))
+		case 2:
+			energy, err = extractOrcaEnergy(string(data))
+		}
+		if err != nil {
+			slog.Warn("提取能量失败", "file", name, "error", err)
+			continue
+		}
+
+		results = append(results, energyResult{FileName: name, Energy: energy})
+		slog.Info("单点能", "file", name, "energy", energy)
+	}
+
+	return results, nil
 }
 
-func GetOrcaEnergy() []results {
-	// 创建一个切片用来存放每一个文件对应的 results
-	var resultsCollection []results
+// ---------------------------------------------------------------------------
+// 文件配对（前缀匹配）
+// ---------------------------------------------------------------------------
 
-	// 得到当前文件下的 sp 文件夹下的所有 out 文件名
-	filePattern := filepath.Join("sp", "*.out")
-	filesName, err := filepath.Glob(filePattern)
-	if err != nil {
-		fmt.Println("Error: failed to get files from directory", err)
-		return resultsCollection
-	}
+var (
+	reSpSuffix  = regexp.MustCompile(`^(.*?)_sp\.[^.]+$`)
+	reOptSuffix = regexp.MustCompile(`^(.*?)_opt\.[^.]+$`)
+)
 
-	// 遍历 filesName 切片，将每一个 results 存放在 resultsCollection 切片中
-	for _, fileName := range filesName {
-		// 通过 fileName 打开文件
-		file, err := os.Open(fileName)
-		if err != nil {
-			fmt.Println("Error: Unable to open the file", err)
-			continue
-		}
-		defer file.Close()
-
-		// 读取文件内容为 Bytes
-		contentsBytes, err := io.ReadAll(file)
-		// Bytes 转化为字符串
-		contentsString := string(contentsBytes)
-		if err != nil {
-			fmt.Println("Error: Failed to read", err)
-			continue
-		}
-
-		// 使用正则表达式搜索 orca 单点能
-		energyRegex := regexp.MustCompile(`FINAL SINGLE POINT ENERGY\s+(-?\d+\.\d+)`)
-
-		// 查找匹配的能量值
-		matches := energyRegex.FindAllStringSubmatch(string(contentsString), -1)
-		if len(matches) > 0 {
-			// 查找文件中最后一个匹配项的能量值
-			energy := matches[len(matches)-1][1]
-			fmt.Println("Energy:", energy)
-
-			// 创建 results 结构体对象
-			fileResults := results{
-				FileName: fileName,
-				Energy:   energy,
-			}
-
-			resultsCollection = append(resultsCollection, fileResults)
-		} else {
-			fmt.Println("No energy found", fileName)
+// fileStem 提取文件名公共前缀: "CH4_sp.out" → "CH4"
+func fileStem(name string) (string, bool) {
+	for _, re := range []*regexp.Regexp{reSpSuffix, reOptSuffix} {
+		if m := re.FindStringSubmatch(name); m != nil {
+			return m[1], true
 		}
 	}
-
-	return resultsCollection
+	return "", false
 }
 
-func RunShermo(config *ShermoConfig, filePath string, energy string) {
-	// 获取文件名和输出文件夹路径
-	file := filepath.Base(filePath)
-	fileName := strings.TrimSuffix(file, filepath.Ext(file))
-	outputDir := filepath.Join(".", "output")
-	// 得到 file 文件的绝对路径
-	absPath, err := filepath.Abs(filePath)
+// stemPair 记录一个配对的 (opt文件名, sp文件名)
+type stemPair struct {
+	Opt, Sp string
+}
 
-	// 运行 Shermo 程序所需要的参数
-	args := []string{
-		config.ShermoPath,
-		absPath,
+// matchByPrefix 基于文件名前缀将 sp 和 opt 文件配对
+func matchByPrefix(spFiles, optFiles []string) ([]stemPair, error) {
+	spIdx := make(map[string]string)
+	for _, f := range spFiles {
+		if stem, ok := fileStem(f); ok {
+			spIdx[stem] = f
+		}
+	}
+
+	optIdx := make(map[string]string)
+	for _, f := range optFiles {
+		if stem, ok := fileStem(f); ok {
+			optIdx[stem] = f
+		}
+	}
+
+	// 按 opt 前缀字母序配对
+	keys := make([]string, 0, len(optIdx))
+	for k := range optIdx {
+		keys = append(keys, k)
+	}
+	sort.Strings(keys)
+
+	var pairs []stemPair
+	for _, key := range keys {
+		spF, ok := spIdx[key]
+		if !ok {
+			return nil, fmt.Errorf("opt 文件 '%s' (前缀 '%s') 没有对应的 sp 文件", optIdx[key], key)
+		}
+		pairs = append(pairs, stemPair{Opt: optIdx[key], Sp: spF})
+	}
+
+	// 警告未配对的 sp 文件
+	for key, f := range spIdx {
+		if _, ok := optIdx[key]; !ok {
+			slog.Warn("sp 文件没有对应的 opt 文件，将被忽略", "file", f)
+		}
+	}
+
+	return pairs, nil
+}
+
+// ---------------------------------------------------------------------------
+// Shermo 执行引擎
+// ---------------------------------------------------------------------------
+
+func buildShermoArgs(cfg *ShermoConfig, optPath, energy string) []string {
+	return []string{
+		cfg.ShermoPath,
+		optPath,
 		"-E", energy,
-		"-prtvib", config.Prtvib,
-		"-T", config.T,
-		"-P", config.P,
-		"-sclZPE", config.SclZPE,
-		"-sclheat", config.SclHeat,
-		"-sclS", config.SclS,
-		"-sclCV", config.SclCV,
-		"-ilowfreq", config.Ilowfreq,
-		"-ravib", config.Ravib,
-		"-imode", config.Imode,
-		"-conc", config.Conc,
-		"-outshm", config.Outshm,
-		"-defmass", config.Defmass,
-	}
-
-	// 同时输出命令
-	fmt.Println(strings.Join(args, " "))
-
-	// 通过命令行运行 Shermo
-	cmd := exec.Command(args[0], args[1:]...)
-	result, err := cmd.CombinedOutput()
-
-	if err == nil {
-		fmt.Println()
-		fmt.Printf("Hint: Shermo completed successfully on file %s.\n\n", file)
-		contents := string(result)
-		// 写入输出数据到文件
-		outputFile := filepath.Join(outputDir, fileName+".txt")
-		err = ioutil.WriteFile(outputFile, []byte(contents), 0644)
-		if err != nil {
-			fmt.Printf("Error writing output file: %v\n", err)
-		}
-	} else {
-		fmt.Println()
-		fmt.Printf("Hint: Shermo execution failed on file %s.\n", file)
+		"-prtvib", fmt.Sprintf("%d", cfg.Prtvib),
+		"-T", cfg.T,
+		"-P", cfg.P,
+		"-sclZPE", cfg.SclZPE,
+		"-sclheat", cfg.SclHeat,
+		"-sclS", cfg.SclS,
+		"-sclCV", cfg.SclCV,
+		"-ilowfreq", fmt.Sprintf("%d", cfg.Ilowfreq),
+		"-ravib", cfg.Ravib,
+		"-intpvib", cfg.Intpvib,
+		"-imagreal", cfg.Imagreal,
+		"-imode", fmt.Sprintf("%d", cfg.Imode),
+		"-conc", cfg.Conc,
+		"-outshm", fmt.Sprintf("%d", cfg.Outshm),
+		"-defmass", fmt.Sprintf("%d", cfg.Defmass),
 	}
 }
 
-func RunAllShermo(config *ShermoConfig, energies []results) {
-	// 注册输入文件夹
-	optDir := filepath.Join(".", "opt")
-	// 注册输入文件夹里所有的 out 文件
-	files, err := filepath.Glob(filepath.Join(optDir, "*.out"))
+func runShermo(cfg *ShermoConfig, optPath, energy string) error {
+	basename := filepath.Base(optPath)
+	stem := strings.TrimSuffix(basename, filepath.Ext(basename))
+
+	// 使用绝对路径，避免 Shermo 内部切换工作目录导致文件查找失败
+	absPath, err := filepath.Abs(optPath)
 	if err != nil {
-		fmt.Printf("Error: failed to get files from directory %s\n", optDir)
+		return fmt.Errorf("获取绝对路径失败 [%s]: %w", optPath, err)
+	}
+
+	args := buildShermoArgs(cfg, absPath, energy)
+	slog.Info("运行 Shermo", "cmd", strings.Join(args, " "))
+
+	cmd := exec.Command(args[0], args[1:]...)
+	var stderrBuf strings.Builder
+	cmd.Stderr = &stderrBuf
+	output, err := cmd.Output()
+	if err != nil {
+		return fmt.Errorf("Shermo 执行失败 [%s]: %w\n%s", basename, err, stderrBuf.String())
+	}
+
+	slog.Info("Shermo 成功完成", "file", basename)
+
+	if err := os.MkdirAll(cfg.OutputDir, 0755); err != nil {
+		return fmt.Errorf("创建输出目录失败: %w", err)
+	}
+
+	outPath := filepath.Join(cfg.OutputDir, stem+".txt")
+	if err := os.WriteFile(outPath, output, 0644); err != nil {
+		return fmt.Errorf("写入输出文件失败: %w", err)
+	}
+	slog.Debug("输出写入", "path", outPath)
+
+	return nil
+}
+
+// ---------------------------------------------------------------------------
+// 主流程
+// ---------------------------------------------------------------------------
+
+func runAll(cfg *ShermoConfig) error {
+	// 1. 扫描单点能
+	slog.Info("正在扫描单点能文件", "dir", cfg.SpDir)
+	energies, err := scanEnergies(cfg.SpDir, cfg.SpFile)
+	if err != nil {
+		return fmt.Errorf("扫描单点能失败: %w", err)
+	}
+	if len(energies) == 0 {
+		return fmt.Errorf("未从 %s 中读取到任何单点能", cfg.SpDir)
+	}
+
+	// 构建能量查找表
+	energyMap := make(map[string]string)
+	for _, e := range energies {
+		energyMap[e.FileName] = e.Energy
+	}
+
+	// 2. 扫描 opt 文件
+	optEntries, err := os.ReadDir(cfg.OptDir)
+	if err != nil {
+		return fmt.Errorf("读取目录 %s 失败: %w", cfg.OptDir, err)
+	}
+	var optFiles []string
+	for _, entry := range optEntries {
+		if !entry.IsDir() {
+			optFiles = append(optFiles, entry.Name())
+		}
+	}
+	if len(optFiles) == 0 {
+		return fmt.Errorf("opt 目录为空: %s", cfg.OptDir)
+	}
+
+	// 3. 前缀配对
+	spNames := make([]string, 0, len(energyMap))
+	for k := range energyMap {
+		spNames = append(spNames, k)
+	}
+	pairs, err := matchByPrefix(spNames, optFiles)
+	if err != nil {
+		return fmt.Errorf("文件配对失败: %w", err)
+	}
+
+	// 4. 逐对调用 Shermo
+	for _, p := range pairs {
+		energy, ok := energyMap[p.Sp]
+		if !ok {
+			slog.Warn("能量未找到，跳过", "file", p.Sp)
+			continue
+		}
+		optPath := filepath.Join(cfg.OptDir, p.Opt)
+		if err := runShermo(cfg, optPath, energy); err != nil {
+			slog.Error("执行 Shermo 失败", "file", p.Opt, "error", err)
+		}
+	}
+
+	slog.Info("全部任务完成")
+	return nil
+}
+
+// ---------------------------------------------------------------------------
+// 入口
+// ---------------------------------------------------------------------------
+
+func main() {
+	configPath := flag.String("config", "config.yaml", "配置文件路径")
+	spDir := flag.String("sp-dir", "", "单点能文件目录（覆盖 config.yaml 中的 spDir）")
+	optDir := flag.String("opt-dir", "", "振动分析文件目录（覆盖 config.yaml 中的 optDir）")
+	outDir := flag.String("output-dir", "", "输出目录（覆盖 config.yaml 中的 outputDir）")
+	showVersion := flag.Bool("version", false, "显示版本信息")
+	verbose := flag.Bool("verbose", false, "输出调试日志")
+	flag.Parse()
+
+	if *showVersion {
+		fmt.Printf("EasyShermo %s\n", version)
 		return
 	}
 
-	// 遍历所有的 files 文件和 result 集合，并全部调用 RunShermo 方法
-	for i, file := range files {
-		// 检查文件是否存在
-		if _, err := os.Stat(file); os.IsNotExist(err) {
-			fmt.Printf("Error: file %s not found.\n", file)
-			continue
-		}
-
-		// 获取能量值
-		energy := energies[i].Energy
-
-		// 调用 RunShermo 函数
-		RunShermo(config, file, energy)
-	}
-}
-
-/*
-******************
-对应 main.py
-******************
-*/
-func main() {
-	// 版权信息
-	versionInfo := map[string]string{
-		"version":      "v1.3.0",
-		"release_date": "Jun-10-2024",
-		"developer":    "Kimariyb, Ryan Hsiun",
-		"address":      "XiaMen University, School of Electronic Science and Engineering",
-		"website":      "https://github.com/kimariyb/kimariPlot",
+	if *verbose {
+		slog.SetLogLoggerLevel(slog.LevelDebug)
 	}
 
-	fmt.Println("EasyShermo -- A Go program to automate the use of Shermo")
-	fmt.Printf("Version: %s, release date: %s\n", versionInfo["version"], versionInfo["release_date"])
-	fmt.Printf("Developer: %s\n", versionInfo["developer"])
-	fmt.Printf("Address: %s\n", versionInfo["address"])
-	fmt.Printf("EasyShermo home website: %s\n", versionInfo["website"])
+	cfg, err := loadConfig(*configPath)
+	if err != nil {
+		slog.Error("配置加载失败", "error", err)
+		os.Exit(1)
+	}
+
+	// CLI 参数覆盖配置文件
+	if *spDir != "" {
+		cfg.SpDir = *spDir
+	}
+	if *optDir != "" {
+		cfg.OptDir = *optDir
+	}
+	if *outDir != "" {
+		cfg.OutputDir = *outDir
+	}
+
+	// settings.ini 迁移检测
+	if _, err := os.Stat("settings.ini"); err == nil {
+		fmt.Println("⚠️  检测到旧的 settings.ini，EasyShermo v2 现在使用 config.yaml 作为配置文件。")
+		fmt.Println("   请参考 config.yaml 示例创建新配置文件。")
+		fmt.Println()
+	}
+
+	// 横幅
+	fmt.Printf("EasyShermo %s\n", version)
+	fmt.Printf("配置文件: %s\n", *configPath)
+	fmt.Println(cfg)
 	fmt.Println()
 
-	// 读取 ShermoConfig 配置，并输出到屏幕
-	shermoConfig, _ := NewShermoConfig()
-	fmt.Println(shermoConfig)
+	if err := runAll(cfg); err != nil {
+		slog.Error("执行失败", "error", err)
+		os.Exit(1)
+	}
+
 	fmt.Println()
-
-	// 将 spFile 转化为 int 类型
-	spFileValue, _ := strconv.Atoi(shermoConfig.SpFile)
-	// 如果 settings.ini 中设置为 1，则读取 gaussian
-	if spFileValue == 1 {
-		// 调用 GetGaussianEnergy 函数获取结果
-		result := GetGaussianEnergy()
-		RunAllShermo(shermoConfig, result)
-	}
-	// 如果 settings.ini 中设置为 2，则读取 orca
-	if spFileValue == 2 {
-		// 调用 GetOrcaEnergy 函数获取结果
-		result := GetOrcaEnergy()
-		RunAllShermo(shermoConfig, result)
-	}
-
-	// 获取当前日期和时间
-	now := time.Now().Format("Jan-02-2006, 15:04:05") // 程序结束后提示版权信息和问候语
-	// 程序结束后提示版权信息和问候语
-	fmt.Println("Thank you for using our plotting tool! Have a great day!")
 	fmt.Println("Copyright (C) 2023 Kimariyb. All rights reserved.")
-	fmt.Printf("Currently timeline: %s\n", now)
-	// 程序结束后等待用户输入
-	fmt.Scanln()
+	fmt.Printf("Currently timeline: %s\n", time.Now().Format("Jan-02-2006, 15:04:05"))
 }

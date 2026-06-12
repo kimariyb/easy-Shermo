@@ -2,126 +2,136 @@
 
 <img width="120%" src="https://repobeats.axiom.co/api/embed/d3eead8ca82e74af4f8831c245d4c2152553fbda.svg">
 
-EasyShermo 是 Kimariyb 开发的一款全自动批处理 Shermo 的 Python 脚本。EasyShermo 使用极其简单无脑，可以瞬间用 Shermo 批处理几十个量子化学计算的输出文件。
+EasyShermo 是 Kimariyb 开发的一款全自动批处理 Shermo 的自动化工具。它可以瞬间用 Shermo 批量处理几十个量子化学计算的输出文件，支持 Python 和 Go 两种版本。
 
-鉴于 Shermo 已经是一个功能十分强大的科学计算程序了，所以 EasyShermo 也只是提高了 Shermo 的使用效率，并没有做其他的工作。 EasyShermo 开发者 Kimariyb 仅使用 Gaussian 和 Orca 作为计算单点的程序，尽管 Shermo 支持很多量化计算程序，但是 EasyShermo 也只支持 Orca 和 Gaussian 单点任务的自动化。
-
+EasyShermo 支持 Gaussian 和 ORCA 两种量子化学程序单点任务的热力学数据批处理。
 
 ## 安装
 
-### 通过 Github Clone 安装
+### Python 版本
 
-本项目已经开源在 Github 上，您可以通过以下步骤安装 EasyShermo：
-
-1. 首先，您需要确保已经安装了 Python 环境和 pip 包管理工具。如果您还没有安装它们，请先安装它们。
-
-2. 下载 EasyShermo 源代码：
 ```shell
+# 方式一：直接从源码运行
 git clone https://github.com/kimariyb/easy-shermo.git
+cd easy-shermo
+pip install pyyaml
+python -m easy_shermo
+
+# 方式二：安装到系统
+pip install .
+easy-shermo
 ```
 
-### 直接下载编译好的 EasyShermo
+### Go 版本
 
-EasyShermo 的作者 Kimariyb 同时用 Go 语言将 EasyShermo 编译打包了一遍，实现的效果和用 Python 语言的相差无几。可以前往 https://github.com/kimariyb/easy-Shermo/releases/tag/v1.2.2 下载已经编译好的 EasyShermo，下载后解压即可。
+```shell
+git clone https://github.com/kimariyb/easy-shermo.git
+cd easy-shermo
+go build -o easyShermo ./easyShermo.go
+./easyShermo
+```
+
+也可以前往 [Releases](https://github.com/kimariyb/easy-Shermo/releases) 下载预编译的二进制文件。
+
+## 配置文件
+
+EasyShermo 使用 YAML 格式的配置文件（`config.yaml`），替代了旧的 `settings.ini`。
+
+```yaml
+# Shermo 可执行文件路径（必填）
+shermoPath: /usr/local/bin/shermo
+
+# 量子化学程序类型: 1 = Gaussian, 2 = ORCA
+spFile: 1
+
+# 目录配置（可通过命令行 --sp-dir / --opt-dir / --output-dir 覆盖）
+spDir: sp
+optDir: opt
+outputDir: output
+
+# 温度 (K)，支持扫描格式如 "50,200,10"
+T: 298.15
+
+# 压强 (atm)，支持扫描格式如 "0.5,20,0.1"
+P: 1.0
+
+# 频率校正因子
+sclZPE: 1.0
+sclheat: 1.0
+sclS: 1.0
+sclCV: 1.0
+
+# 低频处理: 0=谐振, 1=提高低频, 2=熵插值, 3=熵+内能插值
+ilowfreq: 2
+
+# ilowfreq=1 时低频提升到的值 (cm⁻¹)
+ravib: 100
+
+# 更多配置项参见完整 config.yaml
+```
 
 ## 使用
 
-### 使用 Python 运行
-
-1. 在使用 EasyShermo 之前，可以根据自己的需要配置好 `settings.ini`，`settings.ini` 中大部分的配置选项和 Shermo 的 `settings.ini` 一致。在使用 EasyShermo 前，必须配置 `settings.ini` 中的 `shermoPath`。
-
-```ini
-; The path to the Shermo executable file.
-shermoPath = D:\\environment\\Shermo\\Shermo.exe
-
-; The program for performing a single point calculation task.
-; 1. Gaussian
-; 2. Orca
-spFile = 1
-
-; Printing contribution of each vibrational mode.
-; 1: Printing contribution of each vibrational mode.
-; -1: Printing to vibcontri.txt.
-; 0: Do not print
-prtvib = 0
-
-; Temperature in K.
-; By specifying lower, upper limits and stepsize, e.g. 50,200,10, it can be scanned
-T = 298.15
-
-; Pressure in atm.
-; By specifying lower, upper limits and stepsize, e.g. 0.5,20,0.1, it can be scanned
-P = 1.0
-
-; Frequency scale factor for ZPE
-sclZPE = 1.0
-
-; Frequency scale factor for U(T)-U(0) (the same as that for H(T)-H(0))
-sclheat = 1.0
-
-; Frequency scale factor for S(T)
-sclS = 1.0
-
-; Frequency scale factor for heat capacity
-sclCV = 1.0
-
-; Treatment of low frequencies.
-; 0: Harmonic.
-; 1: Raising low frequencies.
-; 2: Entropy interpolation.
-; 3: Entropy and internal energy interpolations
-ilowfreq = 2
-
-; Raising lower frequencies to this value (cm^-1) when ilowfreq=1
-ravib = 100
-
-; Mode of evaluating thermodynamic quantities.
-; 0: Consider all terms.
-; 1: Ignore translation and rotation
-imode = 0
-
-; If not 0, will calculate variation of Gibbs free energy due to concentration change from present state to the specific state.
-; e.g. "conc= 1.5M" and "conc= 2.3atm"
-conc = 0
-
-; Exporting .shm file after loading QC program output file.
-; 1: Exporting .shm file after loading QC program output file.
-; 0: Do not export
-outshm = 0
-
-; Default atomic masses used during reading QC program output file.
-; 1: Element mass.
-; 2: Most abundant isotope.
-; 3: Same as the output file
-defmass = 3
-```
-
-2. 在配置文件中将 `shermoPath` 配置好以后，分别将单点任务和振动分析任务的输出文件放入 `sp` 和 `opt` 文件夹里。同时，根据计算单点使用的程序是 Gaussian 还是 Orca 配置 `spFile` 选项。下面是 EasyShermo 测试文件的示例（单点、优化以及输出文件分别在 `sp/example`、`opt/example` 和 `output/example` 中）
-
-```yaml
-- sp
-  - C_sp.out
-  - C2H2_sp.out
-  - C2H4_sp.out
-  - CH4_sp.out
-  - H2_sp.out
-- opt
-  - C_opt.out
-  - C2H2_opt.out
-  - C2H4_opt.out
-  - CH4_opt.out
-  - H2_opt.out
-```
-
-3. 一切准备就绪之后，运行命令启动项目。EasyShermo 首先会扫描 `sp` 目录下的所有文件，并得到单点能。之后通过命令行批量调用 Shermo 执行 `opt` 目录下的文件。最后将 Shermo 输出内容写入到 `output` 文件夹的文本文件中，文件名与 `opt` 中的文件相同。
+### 基本用法
 
 ```shell
-python easyShermo.py
+# Python 版本
+python -m easy_shermo
+
+# Go 版本
+./easyShermo
 ```
 
-`output` 文件夹里的所有文件的内容，都和单独使用 Shermo 输出的内容一致。
+### 命令行参数
 
-```text
+```shell
+# 指定配置文件
+python -m easy_shermo --config /path/to/config.yaml
+
+# 覆盖目录配置
+python -m easy_shermo --sp-dir ./my_sp --opt-dir ./my_opt --output-dir ./my_output
+
+# 显示调试日志
+python -m easy_shermo --verbose
+
+# 查看版本
+python -m easy_shermo --version
+```
+
+Go 版本参数相同：
+
+```shell
+./easyShermo --sp-dir ./sp --opt-dir ./opt --output-dir ./output --verbose
+```
+
+### 文件命名约定
+
+EasyShermo 通过文件名前缀自动配对单点文件和振动分析文件：
+
+```
+sp/                     opt/
+├── CH4_sp.out    ──→   ├── CH4_opt.out
+├── C2H4_sp.out   ──→   ├── C2H4_opt.out
+├── C2H2_sp.out   ──→   ├── C2H2_opt.out
+├── C_sp.out      ──→   ├── C_opt.out
+└── H2_sp.out     ──→   └── H2_opt.out
+```
+
+**约定大于配置**：请将单点文件命名为 `xxx_sp.out`，振动分析文件命名为 `xxx_opt.out`。配对基于前缀 `xxx`，**不依赖文件顺序**。
+
+### 示例
+
+```shell
+# 使用示例数据测试（Python）
+python -m easy_shermo --sp-dir sp/example --opt-dir opt/example --output-dir output/example
+
+# 使用示例数据测试（Go）
+./easyShermo --sp-dir sp/example --opt-dir opt/example --output-dir /tmp/output
+```
+
+`output` 目录中的输出内容与单独使用 Shermo 输出的内容一致：
+
+```
                            ===========================
                            ========== Total ==========
                            ===========================
@@ -143,21 +153,39 @@ python easyShermo.py
  Sum of electronic energy and thermal correction to G:         -37.8010850 a.u.
 ```
 
-**约定**：为了避免出现 `sp` 文件和 `opt` 文件顺序不一致导致的问题，请按照约定分别将单点文件和优化文件的文件名该为 `xxx_sp.out` 和 `xxx_opt.out`。**约定大于配置**！ 
-
-### 直接运行
-
-EasyShermo 可以直接通过已经编译好的可执行文件运行，省去了下载 Python 和配置 Python 环境变量的步骤，对于不会编程的人来说相当友好。使用的步骤和用 Python 脚本的步骤一致，只是省略了安装 Python 和相关的库。
-
 ## 有关 Shermo
 
-Shermo 是 [Sobereva@北京科音](http://www.keinsci.com/) 开发的一个免费的可以独立运行的计算分子热力学数据的程序，需要从量子化学程序振动分析的输出文件里读取信息来进行计算，计算时基于理想气体假设。如果有对 Shermo 程序不熟悉的，可以浏览以下网址。
+Shermo 是 [Sobereva@北京科音](http://www.keinsci.com/) 开发的独立计算分子热力学数据的程序。更多信息：
 
-- Shermo 的官方网站：[Shermo](http://sobereva.com/soft/shermo/)
-- Shermo 的中文教程：[使用Shermo结合量子化学程序方便地计算分子的各种热力学数据](http://sobereva.com/552)
-- Shermo 程序的原文：[Shermo: A general code for calculating molecular thermochemistry properties](https://www.sciencedirect.com/science/article/abs/pii/S2210271X21001080)
+- [Shermo 官方网站](http://sobereva.com/soft/shermo/)
+- [中文教程：使用 Shermo 结合量子化学程序计算分子热力学数据](http://sobereva.com/552)
+- [Shermo 原文](https://www.sciencedirect.com/science/article/abs/pii/S2210271X21001080)
+
+## 项目结构
+
+```
+easy-shermo/
+├── easy_shermo/          # Python 包
+│   ├── __init__.py       # 版本信息
+│   ├── __main__.py       # python -m 入口
+│   ├── cli.py            # 命令行接口
+│   ├── config.py         # YAML 配置解析
+│   ├── engine.py         # Shermo 执行引擎
+│   ├── utils.py          # 工具函数（文件配对等）
+│   └── parsers/          # 单点能解析器
+│       ├── __init__.py
+│       ├── gaussian.py   # Gaussian 解析器
+│       └── orca.py       # ORCA 解析器
+├── easyShermo.go         # Go 版本
+├── config.yaml           # 配置文件
+├── pyproject.toml         # 项目元数据
+├── tests/                # 测试
+│   └── test_easy_shermo.py
+├── sp/                   # 单点能文件目录
+├── opt/                  # 振动分析文件目录
+└── output/               # 输出目录
+```
 
 ## 许可证
 
-EasyShermo 基于 MIT 许可证开源。这意味着您可以自由地使用、修改和分发代码。有关更多信息，请参见 LICENSE 文件。
-
+EasyShermo 基于 MIT 许可证开源。详见 [LICENSE](LICENSE) 文件。

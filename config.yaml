@@ -1,0 +1,59 @@
+# EasyShermo 配置文件
+# 使用 YAML 格式，替代了旧的 settings.ini
+
+# Shermo 可执行文件路径（必填）
+shermoPath: /usr/local/bin/shermo
+
+# 量子化学程序类型: 1 = Gaussian, 2 = ORCA
+spFile: 1
+
+# 目录配置（可通过命令行 --sp-dir / --opt-dir / --output-dir 覆盖）
+spDir: sp
+optDir: opt
+outputDir: output
+
+# 振动贡献打印模式
+#   1: 屏幕打印
+#  -1: 写入 vibcontri.txt
+#   0: 不打印
+prtvib: 0
+
+# 温度 (K)，支持扫描格式如 "50,200,10"
+T: 298.15
+
+# 压强 (atm)，支持扫描格式如 "0.5,20,0.1"
+P: 1.0
+
+# 频率校正因子
+sclZPE: 1.0      # ZPE 校正因子
+sclheat: 1.0     # U(T)-U(0) 校正因子
+sclS: 1.0        # S(T) 校正因子
+sclCV: 1.0       # 热容校正因子
+
+# 低频处理模式
+#   0: 谐振近似 (RRHO)
+#   1: 提高低频 (Truhlar)
+#   2: 熵插值 (Grimme)
+#   3: 熵和内能插值 (Minenkov)
+ilowfreq: 2
+
+# ilowfreq=1 时将低频提升至此值 (cm⁻¹)
+ravib: 100
+
+# ilowfreq=2/3 时插值使用的频率阈值 (cm⁻¹)
+intpvib: 100
+
+# 将模小于此值 (cm⁻¹) 的虚频视为实频
+imagreal: 20
+
+# 热力学计算模式: 0 = 考虑所有项, 1 = 忽略平动和转动
+imode: 0
+
+# 浓度变化引起的吉布斯自由能变，如 "conc=1.5M" 或 "conc=2.3atm"
+conc: 0
+
+# 加载 QC 输出文件后导出 .shm 文件: 1 = 导出, 0 = 不导出
+outshm: 0
+
+# 原子质量: 1 = 元素质量, 2 = 最丰同位素, 3 = 同输出文件
+defmass: 3

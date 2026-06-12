@@ -149,6 +149,13 @@ dmypy.json
 # pytype static type analyzer
 .pytype/
 
+# Go build output
+easyShermo
+easyShermo.exe
+
+# Vendor (used only for local pyyaml workaround)
+_vendor/
+
 # Cython debug symbols
 cython_debug/
 
@@ -160,3 +167,6 @@ cython_debug/
 .idea/
 
 build/
+.codegraph/
+.reasonix/
+
